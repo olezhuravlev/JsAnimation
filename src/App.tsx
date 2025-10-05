@@ -1,26 +1,55 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import './App.css';
-import {TriangleCanvas} from "./Triangle";
 
-//import playerImageSrc2 from './image/png/shadow_dog_2.png';
+// Вариант 1: Если изображение в public папке
+const playerImageSrc = '/image/png/shadow_dog.png';
+
+// Вариант 2: Если изображение в src папке (нужен импорт)
+//import playerImageSrc from './image/png/shadow_dog.png';
 
 export const CANVAS_WIDTH = 600;
 export const CANVAS_HEIGHT = 600;
 
+const SPRITE_WIDTH = 575;
+const SPRITE_HEIGHT = 523;
+
 function App() {
 
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
     //const playerImageRef = React.createRef<HTMLCanvasElement>();
 
-    //let x = 0;
+    let frameRow = 0;
+    let frameColumn = 0;
+    let frameCounter= 0;
+    let frozenFrames = 5;
+    const spriteFrames: number[] = [7, 7, 7, 9, 11, 5, 7, 7, 12, 4];
 
     const animate = (ctx: CanvasRenderingContext2D, playerImage: HTMLImageElement) => {
+
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        ctx.fillRect(100, 50, 100, 100);
-        ctx.drawImage(playerImage, 0, 0);
-        // requestAnimationFrame(() => {
-        //     animate(ctx, playerImage);
-        // });
+
+        const {sourceX, sourceY, sourceWidth, sourceHeight} ={sourceX: 0, sourceY: 0, sourceWidth: SPRITE_WIDTH, sourceHeight: SPRITE_HEIGHT};
+        const {destX, destY, destWidth, destHeight} = {destX: 0, destY: 0, destWidth: SPRITE_WIDTH, destHeight: SPRITE_HEIGHT};
+
+        let frameColumnMaxIdx = spriteFrames[frameRow];
+
+        // Freeze all frames - only each N-frame must be redrawn.
+        ++frameCounter;
+        if (frameCounter % frozenFrames === 0) {
+            frameCounter = 0;
+            ++frameColumn;
+            if (frameColumn >= frameColumnMaxIdx) {
+                frameColumn = 0;
+                // if (frameRow > frameRowMaxIdx) {
+                //     frameRow = 0;
+                // }
+            }
+        }
+        //console.log(`stepX: ${stepX}, stepY: ${stepY}`);
+        ctx.drawImage(playerImage, frameColumn * SPRITE_WIDTH, frameRow * SPRITE_HEIGHT, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+        requestAnimationFrame(() => {
+            animate(ctx, playerImage);
+        });
     }
 
     useEffect(() => {
@@ -36,12 +65,6 @@ function App() {
         ctx.canvas.height = CANVAS_HEIGHT;
 
         const playerImage = new Image();
-
-        // Вариант 1: Если изображение в public папке
-        const playerImageSrc = '/image/png/shadow_dog.png';
-
-        // Вариант 2: Если изображение в src папке (нужен импорт - выше)
-        //import playerImageSrc from './image/png/shadow_dog_2.png';
         playerImage.src = playerImageSrc;
 
         playerImage.onload = () => {
