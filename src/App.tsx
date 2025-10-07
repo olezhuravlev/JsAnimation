@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
 
 // Вариант 1: Если изображение в public папке
@@ -13,40 +13,96 @@ export const CANVAS_HEIGHT = 600;
 const SPRITE_WIDTH = 575;
 const SPRITE_HEIGHT = 523;
 
+const spriteAnimations: { [key: string]: any } = {};
+
 function App() {
 
-    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
-    //const playerImageRef = React.createRef<HTMLCanvasElement>();
+    const playerImage = new Image();
+    playerImage.src = playerImageSrc;
 
-    let frameRow = 0;
-    let frameColumn = 0;
-    let frameCounter= 0;
-    let frozenFrames = 5;
-    const spriteFrames: number[] = [7, 7, 7, 9, 11, 5, 7, 7, 12, 4];
+    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
+    const [playerState, setPlayerState] = useState("idle");
+
+    let frameCounter = 0;
+    let frozenFrames = 7;
+    let spritePhaseToShowIdx = 0;
+
+    const animationStates = [
+        {
+            name: 'idle',
+            framesCount: 7,
+        },
+        {
+            name: 'jump',
+            framesCount: 7,
+        },
+        {
+            name: 'fall',
+            framesCount: 7,
+        },
+        {
+            name: 'run',
+            framesCount: 9,
+        },
+        {
+            name: 'dizzy',
+            framesCount: 11,
+        },
+        {
+            name: 'sit',
+            framesCount: 5,
+        },
+        {
+            name: 'roll',
+            framesCount: 7,
+        },
+        {
+            name: 'bite',
+            framesCount: 7,
+        },
+        {
+            name: 'ko',
+            framesCount: 12,
+        },
+        {
+            name: 'hit',
+            framesCount: 4,
+        }
+    ]
+
+    const changeState = (newState: string) => {
+        setPlayerState(newState);
+    }
+
+    // Fill in sprite positions array.
+    const fillAnimations = () => {
+        animationStates.forEach((state, idx) => {
+            let frames = {
+                location: [] as { x: number; y: number }[],
+            }
+            for (let frameIdx = 0; frameIdx < state.framesCount; frameIdx++) {
+                let positionX = frameIdx * SPRITE_WIDTH;
+                let positionY = idx * SPRITE_HEIGHT;
+                frames.location.push({x: positionX, y: positionY});
+            }
+            spriteAnimations[state.name] = frames;
+        })
+    }
 
     const animate = (ctx: CanvasRenderingContext2D, playerImage: HTMLImageElement) => {
-
-        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        const {sourceX, sourceY, sourceWidth, sourceHeight} ={sourceX: 0, sourceY: 0, sourceWidth: SPRITE_WIDTH, sourceHeight: SPRITE_HEIGHT};
-        const {destX, destY, destWidth, destHeight} = {destX: 0, destY: 0, destWidth: SPRITE_WIDTH, destHeight: SPRITE_HEIGHT};
-
-        let frameColumnMaxIdx = spriteFrames[frameRow];
-
         // Freeze all frames - only each N-frame must be redrawn.
         ++frameCounter;
         if (frameCounter % frozenFrames === 0) {
             frameCounter = 0;
-            ++frameColumn;
-            if (frameColumn >= frameColumnMaxIdx) {
-                frameColumn = 0;
-                // if (frameRow > frameRowMaxIdx) {
-                //     frameRow = 0;
-                // }
+            const locationArr: { x: number; y: number }[] = spriteAnimations[playerState].location;
+            if (spritePhaseToShowIdx >= locationArr.length - 1) {
+                spritePhaseToShowIdx = 0;
             }
+            const currentLocation = locationArr[spritePhaseToShowIdx++];
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            ctx.drawImage(playerImage, currentLocation.x, currentLocation.y, SPRITE_WIDTH, SPRITE_HEIGHT, 0, 0, SPRITE_WIDTH, SPRITE_HEIGHT);
         }
-        //console.log(`stepX: ${stepX}, stepY: ${stepY}`);
-        ctx.drawImage(playerImage, frameColumn * SPRITE_WIDTH, frameRow * SPRITE_HEIGHT, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+
         requestAnimationFrame(() => {
             animate(ctx, playerImage);
         });
@@ -54,34 +110,64 @@ function App() {
 
     useEffect(() => {
 
+        console.log("===> useEffect[]");
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        console.log(ctx);
         ctx.canvas.width = CANVAS_WIDTH;
         ctx.canvas.height = CANVAS_HEIGHT;
-
-        const playerImage = new Image();
-        playerImage.src = playerImageSrc;
 
         playerImage.onload = () => {
             animate(ctx, playerImage);
         }
 
-        // playerImage.onerror = () => {
-        //     console.error('Не удалось загрузить изображение');
-        //     // Рисуем без изображения
-        //     animate(ctx, playerImage);
-        // }
+        fillAnimations();
     }, []); // Пустой массив зависимостей = выполнить только после монтирования
+
+    useEffect(() => {
+
+        console.log("===> useEffect[]");
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.canvas.width = CANVAS_WIDTH;
+        ctx.canvas.height = CANVAS_HEIGHT;
+
+        frameCounter = 0;
+        spritePhaseToShowIdx = 0;
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        animate(ctx, playerImage);
+    }, [playerState]);
 
     return (
         <div className="App">
 
             <canvas id={"canvas1"} ref={canvasRef}/>
+
+            <div className="controls">
+                <label htmlFor="animations">Choose Animation</label>
+                <select id="animations" name="animations" onChange={(e) => changeState(e.target.value)}>
+                    <option value="idle">Idle</option>
+                    <option value="jump">Jump</option>
+                    <option value="fall">Fall</option>
+                    <option value="run">Run</option>
+                    <option value="dizzy">Dizzy</option>
+                    <option value="sit">Sit</option>
+                    <option value="roll">Roll</option>
+                    <option value="bite">Bite</option>
+                    <option value="ko">KO</option>
+                    <option value="hit">Get hit</option>
+                </select>
+            </div>
 
             {/* Простая версия */}
             {/*<SimpleTriangle/>*/}
