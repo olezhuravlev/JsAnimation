@@ -1,14 +1,20 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {RefObject, useEffect, useRef, useState} from 'react';
 import './App.css';
 
 // Case 1: The image is in 'public' folder.
 const playerImageSrc = '/image/png/shadow_dog.png';
 
+const backgroundImageSrc_1 = '/image/png/layer-1.png';
+const backgroundImageSrc_2 = '/image/png/layer-2.png';
+const backgroundImageSrc_3 = '/image/png/layer-3.png';
+const backgroundImageSrc_4 = '/image/png/layer-4.png';
+const backgroundImageSrc_5 = '/image/png/layer-5.png';
+
 // Case 2: The image is in 'src' folder (import needed).
 // import playerImageSrc from './image/png/shadow_dog.png';
 
-export const CANVAS_WIDTH = 600;
-export const CANVAS_HEIGHT = 600;
+export const CANVAS_WIDTH = 800;
+export const CANVAS_HEIGHT = 700;
 
 const FROZEN_FRAMES = 3;
 const SPRITE_WIDTH = 575;
@@ -33,6 +39,13 @@ function App() {
 
     // Source image for all sprites.
     const playerImageRef = useRef<HTMLImageElement>(new Image());
+
+    let speed = 5;
+    const backgroundImageRef_1 = useRef<HTMLImageElement>(new Image());
+    const backgroundImageRef_2 = useRef<HTMLImageElement>(new Image());
+    const backgroundImageRef_3 = useRef<HTMLImageElement>(new Image());
+    const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
+    const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
 
     // Image phases for each sprite sequence.
     interface StatePhase {
@@ -166,6 +179,47 @@ function App() {
         animationIdRef.current = requestAnimationFrame(animate);
     }
 
+    const loadBackgroundImage = (backgroundImageRef: RefObject<HTMLImageElement>, backgroundImageSrc: string, title: string) : Promise<void> => {
+
+        return new Promise((resolve, reject) => {
+
+            if (!backgroundImageRef.current) {
+                reject(new Error(`BACKGROUND IMAGE REF FOR ${title} IN NULL!`));
+                return;
+            }
+
+            backgroundImageRef.current.onload = () => {
+                console.log(`===> BACKGROUND IMAGE ${title} LOADED`);
+                resolve();
+            }
+            backgroundImageRef.current.onerror = () => {
+                const msg: string = `===> FAILED TO LOAD BACKGROUND IMAGE ${title}!`;
+                console.error(msg);
+                reject(new Error(msg));
+            };
+
+            backgroundImageRef.current.src = backgroundImageSrc;
+        })
+    }
+
+    const loadBackgroundImages = async () => {
+
+        console.log("===> *** LOAD IMAGES ***", renderCountRef.current++);
+
+        try {
+            await Promise.all([
+                loadBackgroundImage(backgroundImageRef_1, backgroundImageSrc_1, "1"),
+                loadBackgroundImage(backgroundImageRef_2, backgroundImageSrc_2, "2"),
+                loadBackgroundImage(backgroundImageRef_3, backgroundImageSrc_3, "3"),
+                loadBackgroundImage(backgroundImageRef_4, backgroundImageSrc_4, "4"),
+                loadBackgroundImage(backgroundImageRef_5, backgroundImageSrc_5, "5"),
+            ]);
+            console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
+        } catch (error) {
+            console.error("===> SOME IMAGES FAILED TO LOAD:", error);
+        }
+    }
+
     useEffect(() => {
 
         console.log("===> *** INIT ***", renderCountRef.current++);
@@ -181,15 +235,18 @@ function App() {
 
         fillAnimations();
 
-        playerImageRef.current.src = playerImageSrc;
+        loadBackgroundImages();
+
         playerImageRef.current.onload = () => {
-            console.log("===> IMAGE LOADED");
+            console.log("===> PLAYER IMAGE LOADED");
             startAnimation();
         }
 
         playerImageRef.current.onerror = () => {
-            console.error("===> FAILED TO LOAD IMAGE!");
+            console.error("===> FAILED TO LOAD PLAYER IMAGE!");
         };
+
+        playerImageRef.current.src = playerImageSrc;
 
         // Start animations immediately.
         startAnimation();
