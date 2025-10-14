@@ -126,6 +126,18 @@ function App() {
         })
     }
 
+    let gameSpeed = 15;
+    let x1_1 = 0;
+    let x1_2 = 2400;
+    let x2_1 = 0;
+    let x2_2 = 2400;
+    let x3_1 = 0;
+    let x3_2 = 2400;
+    let x4_1 = 0;
+    let x4_2 = 2400;
+    let x5_1 = 0;
+    let x5_2 = 2400;
+
     const animate = (timestamp: number) => {
 
         const canvas = canvasRef.current;
@@ -160,8 +172,37 @@ function App() {
             const spriteCoordinates = locationArr[spritePhaseToShowIdxRef.current++];
 
             if (ctx && spriteCoordinates) {
+
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                ctx.drawImage(image, spriteCoordinates.x, spriteCoordinates.y, SPRITE_WIDTH, SPRITE_HEIGHT, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                ctx.drawImage(backgroundImageRef_1.current, x1_1, 0);
+                ctx.drawImage(backgroundImageRef_1.current, x1_2, 0);
+
+                ctx.drawImage(backgroundImageRef_2.current, x2_1, 0);
+                ctx.drawImage(backgroundImageRef_2.current, x2_2, 0);
+
+                ctx.drawImage(backgroundImageRef_3.current, x3_1, 0);
+                ctx.drawImage(backgroundImageRef_3.current, x3_2, 0);
+
+                ctx.drawImage(backgroundImageRef_4.current, x4_1, 0);
+                ctx.drawImage(backgroundImageRef_4.current, x4_2, 0);
+
+                ctx.drawImage(backgroundImageRef_5.current, x5_1, 0);
+                ctx.drawImage(backgroundImageRef_5.current, x5_2, 0);
+
+                if (x5_1 <= -2400) {
+                    x5_1 = 2400 + x5_2 - gameSpeed;
+                } else {
+                    x5_1 -= gameSpeed;
+                }
+
+                if (x5_2 <= -2400) {
+                    x5_2 = 2400 + x5_1 - gameSpeed;
+                } else {
+                    x5_2 -= gameSpeed;
+                }
+
+                ctx.drawImage(image, spriteCoordinates.x, spriteCoordinates.y, SPRITE_WIDTH, SPRITE_HEIGHT, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
             }
 
             if (spritePhaseToShowIdxRef.current >= locationArr.length) {
@@ -179,7 +220,7 @@ function App() {
         animationIdRef.current = requestAnimationFrame(animate);
     }
 
-    const loadBackgroundImage = (backgroundImageRef: RefObject<HTMLImageElement>, backgroundImageSrc: string, title: string) : Promise<void> => {
+    const loadBackgroundImage = (backgroundImageRef: RefObject<HTMLImageElement>, backgroundImageSrc: string, title: string): Promise<void> => {
 
         return new Promise((resolve, reject) => {
 
@@ -235,8 +276,6 @@ function App() {
 
         fillAnimations();
 
-        loadBackgroundImages();
-
         playerImageRef.current.onload = () => {
             console.log("===> PLAYER IMAGE LOADED");
             startAnimation();
@@ -249,14 +288,16 @@ function App() {
         playerImageRef.current.src = playerImageSrc;
 
         // Start animations immediately.
-        startAnimation();
 
-        return () => {
-            if (animationIdRef.current) {
-                cancelAnimationFrame(animationIdRef.current);
-            }
-        };
-
+        loadBackgroundImages()
+            .then(value => {
+                startAnimation();
+                return () => {
+                    if (animationIdRef.current) {
+                        cancelAnimationFrame(animationIdRef.current);
+                    }
+                };
+            })
     }, []); // Empty dependencies array - invoked just once after page mount.
 
     // Restart animations after state changed.
