@@ -19,6 +19,72 @@ export const CANVAS_HEIGHT = 700;
 const FROZEN_FRAMES = 3;
 const SPRITE_WIDTH = 575;
 const SPRITE_HEIGHT = 523;
+let GAME_SPEED = 13;
+
+class Layer {
+
+    private canvasRef: RefObject<HTMLCanvasElement>;
+    private ctx: CanvasRenderingContext2D | null = null;
+
+    private x: number;
+    private y: number;
+    private width: number;
+    private height: number;
+    private x2: number;
+    private imageRef: RefObject<HTMLImageElement>;
+    private stepWidth: number;
+    private speedModifier: number;
+
+    constructor(canvasRef: RefObject<HTMLCanvasElement>, imageRef: RefObject<HTMLImageElement>, stepWidth: number, speedModifier: number) {
+        this.canvasRef = canvasRef;
+        this.x = 0;
+        this.y = 0;
+        this.width = 2400;
+        this.height = 700;
+        this.x2 = this.width;
+        this.imageRef = imageRef;
+        this.stepWidth = stepWidth;
+        this.speedModifier = speedModifier;
+    }
+
+    changeGameSpeed(gameSpeed: number,) {
+        this.stepWidth = gameSpeed;
+    }
+
+    update() {
+
+        const offset = this.stepWidth * this.speedModifier;
+
+        // Make another step by "offset" pixels.
+        if (this.x <= -this.width) {
+            this.x = this.x2 + this.width - offset;
+        } else {
+            this.x -= offset;
+        }
+
+        if (this.x2 <= -this.width) {
+            this.x2 = this.x +  this.width - offset;
+        } else {
+            this.x2 -= offset;
+        }
+
+        this.x = Math.floor(this.x);
+        this.x2 = Math.floor(this.x2);
+
+        return this;
+    }
+
+    draw() {
+
+        if (!this.ctx) {
+            this.ctx = this.canvasRef.current.getContext('2d');
+        }
+        if (this.ctx) {
+            this.ctx.drawImage(this.imageRef.current, this.x, this.y, this.width, this.height);
+            this.ctx.drawImage(this.imageRef.current, this.x2, this.y, this.width, this.height);
+        }
+    }
+}
 
 function App() {
 
@@ -40,12 +106,19 @@ function App() {
     // Source image for all sprites.
     const playerImageRef = useRef<HTMLImageElement>(new Image());
 
-    let speed = 5;
     const backgroundImageRef_1 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_2 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_3 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
+
+    const layer1 = new Layer(canvasRef, backgroundImageRef_1, GAME_SPEED, 0.2)
+    const layer2 = new Layer(canvasRef, backgroundImageRef_2, GAME_SPEED, 0.4)
+    const layer3 = new Layer(canvasRef, backgroundImageRef_3, GAME_SPEED, 0.6)
+    const layer4 = new Layer(canvasRef, backgroundImageRef_4, GAME_SPEED, 0.8)
+    const layer5 = new Layer(canvasRef, backgroundImageRef_5, GAME_SPEED, 1.0)
+
+    const gameObjects: Layer[] = [layer1, layer2, layer3, layer4, layer5]
 
     // Image phases for each sprite sequence.
     interface StatePhase {
@@ -126,18 +199,6 @@ function App() {
         })
     }
 
-    let gameSpeed = 15;
-    let x1_1 = 0;
-    let x1_2 = 2400;
-    let x2_1 = 0;
-    let x2_2 = 2400;
-    let x3_1 = 0;
-    let x3_2 = 2400;
-    let x4_1 = 0;
-    let x4_2 = 2400;
-    let x5_1 = 0;
-    let x5_2 = 2400;
-
     const animate = (timestamp: number) => {
 
         const canvas = canvasRef.current;
@@ -175,33 +236,10 @@ function App() {
 
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-                ctx.drawImage(backgroundImageRef_1.current, x1_1, 0);
-                ctx.drawImage(backgroundImageRef_1.current, x1_2, 0);
+                // Draw the backgrounds.
+                gameObjects.forEach(layer => layer.update().draw());
 
-                ctx.drawImage(backgroundImageRef_2.current, x2_1, 0);
-                ctx.drawImage(backgroundImageRef_2.current, x2_2, 0);
-
-                ctx.drawImage(backgroundImageRef_3.current, x3_1, 0);
-                ctx.drawImage(backgroundImageRef_3.current, x3_2, 0);
-
-                ctx.drawImage(backgroundImageRef_4.current, x4_1, 0);
-                ctx.drawImage(backgroundImageRef_4.current, x4_2, 0);
-
-                ctx.drawImage(backgroundImageRef_5.current, x5_1, 0);
-                ctx.drawImage(backgroundImageRef_5.current, x5_2, 0);
-
-                if (x5_1 <= -2400) {
-                    x5_1 = 2400 + x5_2 - gameSpeed;
-                } else {
-                    x5_1 -= gameSpeed;
-                }
-
-                if (x5_2 <= -2400) {
-                    x5_2 = 2400 + x5_1 - gameSpeed;
-                } else {
-                    x5_2 -= gameSpeed;
-                }
-
+                // Draw the dog.
                 ctx.drawImage(image, spriteCoordinates.x, spriteCoordinates.y, SPRITE_WIDTH, SPRITE_HEIGHT, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
             }
 
