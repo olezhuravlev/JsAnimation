@@ -19,13 +19,14 @@ export const CANVAS_HEIGHT = 700;
 const FROZEN_FRAMES = 3;
 const SPRITE_WIDTH = 575;
 const SPRITE_HEIGHT = 523;
-let GAME_SPEED = 13;
+const GAME_SPEED_INITIAL = 13;
 
 class Layer {
 
     private canvasRef: RefObject<HTMLCanvasElement>;
     private ctx: CanvasRenderingContext2D | null = null;
 
+    private id: string;
     private x: number;
     private y: number;
     private width: number;
@@ -35,7 +36,8 @@ class Layer {
     private stepWidth: number;
     private speedModifier: number;
 
-    constructor(canvasRef: RefObject<HTMLCanvasElement>, imageRef: RefObject<HTMLImageElement>, stepWidth: number, speedModifier: number) {
+    constructor(id: string, canvasRef: RefObject<HTMLCanvasElement>, imageRef: RefObject<HTMLImageElement>, stepWidth: number, speedModifier: number) {
+        this.id = id;
         this.canvasRef = canvasRef;
         this.x = 0;
         this.y = 0;
@@ -47,13 +49,15 @@ class Layer {
         this.speedModifier = speedModifier;
     }
 
-    changeGameSpeed(gameSpeed: number,) {
-        this.stepWidth = gameSpeed;
+    changeGameSpeed(stepWidth: number,) {
+        this.stepWidth = stepWidth;
     }
 
     update() {
 
-        const offset = this.stepWidth * this.speedModifier;
+        const offset = Math.floor(this.stepWidth * this.speedModifier);
+        console.log(`update background ${this.id} stepWidth:`, this.stepWidth);
+        console.log(`update background ${this.id} offset:`, offset);
 
         // Make another step by "offset" pixels.
         if (this.x <= -this.width) {
@@ -63,7 +67,7 @@ class Layer {
         }
 
         if (this.x2 <= -this.width) {
-            this.x2 = this.x +  this.width - offset;
+            this.x2 = this.x + this.width - offset;
         } else {
             this.x2 -= offset;
         }
@@ -92,7 +96,10 @@ function App() {
     // Ref - keeps state until the page refreshed. Doesn't invoke rerender.
 
     // Image row to show.
-    const [playerState, setPlayerState] = useState("idle");
+    const [playerState, setPlayerState] = useState("run");
+
+    // Game scrolling speed.
+    const [gameSpeed, setGameSpeed] = useState<number>(GAME_SPEED_INITIAL);
 
     // Canvas itself.
     const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
@@ -112,11 +119,11 @@ function App() {
     const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
 
-    const layer1 = new Layer(canvasRef, backgroundImageRef_1, GAME_SPEED, 0.2)
-    const layer2 = new Layer(canvasRef, backgroundImageRef_2, GAME_SPEED, 0.4)
-    const layer3 = new Layer(canvasRef, backgroundImageRef_3, GAME_SPEED, 0.6)
-    const layer4 = new Layer(canvasRef, backgroundImageRef_4, GAME_SPEED, 0.8)
-    const layer5 = new Layer(canvasRef, backgroundImageRef_5, GAME_SPEED, 1.0)
+    const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
+    const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
+    const layer3 = new Layer("3", canvasRef, backgroundImageRef_3, gameSpeed, 0.6)
+    const layer4 = new Layer("4", canvasRef, backgroundImageRef_4, gameSpeed, 0.8)
+    const layer5 = new Layer("5", canvasRef, backgroundImageRef_5, gameSpeed, 1.0)
 
     const gameObjects: Layer[] = [layer1, layer2, layer3, layer4, layer5]
 
@@ -345,19 +352,27 @@ function App() {
         startAnimation();
     }, [playerState]);
 
-    const changeState = (newState: string) => {
+    const changePlayerState = (newState: string) => {
         setPlayerState(newState);
         spritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
     }
 
+    const changeGameSpeed = (newSpeed: number) => {
+        console.log("NEW SPEED", newSpeed);
+        setGameSpeed(newSpeed);
+        // Draw the backgrounds.
+        gameObjects.forEach(layer => layer.changeGameSpeed(newSpeed));
+    }
+
     return (
-        <div className="App">
-
-            <canvas id={"canvas1"} ref={canvasRef}/>
-
-            <div className="controls">
-                <label htmlFor="animations">Choose Animation</label>
-                <select id="animations" name="animations" onChange={(e) => changeState(e.target.value)}>
+        <div id="App">
+            <div>
+                <canvas id={"canvas1"} ref={canvasRef}/>
+            </div>
+            <div id="controls">
+                <label htmlFor="animations">Choose Animation:</label>
+                <select id="animations" name="animations" defaultValue={"run"}
+                        onChange={(e) => changePlayerState(e.target.value)}>
                     <option value="idle">Idle</option>
                     <option value="jump">Jump</option>
                     <option value="fall">Fall</option>
@@ -369,6 +384,13 @@ function App() {
                     <option value="ko">Get killed</option>
                     <option value="hit">Get hit</option>
                 </select>
+                <div id="gameSpeed">
+                    <p>Game speed: <span id="gameSpeed">{gameSpeed}</span></p>
+                    <input type="range" id="slider" className="slider" value={gameSpeed} min="0" max="30" step="1"
+                           onChange={(e) => {
+                               changeGameSpeed(Number(e.target.value))
+                           }}/>
+                </div>
             </div>
 
             {/* Simple version */}
