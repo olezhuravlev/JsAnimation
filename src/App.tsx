@@ -1,5 +1,6 @@
 import React, {RefObject, useEffect, useRef, useState} from 'react';
 import './App.css';
+import {Layer} from "./Layer";
 
 // Case 1: The image is in 'public' folder.
 const playerImageSrc = '/image/png/shadow_dog.png';
@@ -20,75 +21,6 @@ const FROZEN_FRAMES = 3;
 const SPRITE_WIDTH = 575;
 const SPRITE_HEIGHT = 523;
 const GAME_SPEED_INITIAL = 13;
-
-class Layer {
-
-    private canvasRef: RefObject<HTMLCanvasElement>;
-    private ctx: CanvasRenderingContext2D | null = null;
-
-    private id: string;
-    private x: number;
-    private y: number;
-    private width: number;
-    private height: number;
-    private x2: number;
-    private imageRef: RefObject<HTMLImageElement>;
-    private stepWidth: number;
-    private speedModifier: number;
-
-    constructor(id: string, canvasRef: RefObject<HTMLCanvasElement>, imageRef: RefObject<HTMLImageElement>, stepWidth: number, speedModifier: number) {
-        this.id = id;
-        this.canvasRef = canvasRef;
-        this.x = 0;
-        this.y = 0;
-        this.width = 2400;
-        this.height = 700;
-        this.x2 = this.width;
-        this.imageRef = imageRef;
-        this.stepWidth = stepWidth;
-        this.speedModifier = speedModifier;
-    }
-
-    changeGameSpeed(stepWidth: number,) {
-        this.stepWidth = stepWidth;
-    }
-
-    update() {
-
-        const offset = Math.floor(this.stepWidth * this.speedModifier);
-        console.log(`update background ${this.id} stepWidth:`, this.stepWidth);
-        console.log(`update background ${this.id} offset:`, offset);
-
-        // Make another step by "offset" pixels.
-        if (this.x <= -this.width) {
-            this.x = this.x2 + this.width - offset;
-        } else {
-            this.x -= offset;
-        }
-
-        if (this.x2 <= -this.width) {
-            this.x2 = this.x + this.width - offset;
-        } else {
-            this.x2 -= offset;
-        }
-
-        this.x = Math.floor(this.x);
-        this.x2 = Math.floor(this.x2);
-
-        return this;
-    }
-
-    draw() {
-
-        if (!this.ctx) {
-            this.ctx = this.canvasRef.current.getContext('2d');
-        }
-        if (this.ctx) {
-            this.ctx.drawImage(this.imageRef.current, this.x, this.y, this.width, this.height);
-            this.ctx.drawImage(this.imageRef.current, this.x2, this.y, this.width, this.height);
-        }
-    }
-}
 
 function App() {
 
@@ -119,13 +51,12 @@ function App() {
     const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
 
-    const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
-    const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
-    const layer3 = new Layer("3", canvasRef, backgroundImageRef_3, gameSpeed, 0.6)
-    const layer4 = new Layer("4", canvasRef, backgroundImageRef_4, gameSpeed, 0.8)
-    const layer5 = new Layer("5", canvasRef, backgroundImageRef_5, gameSpeed, 1.0)
-
-    const gameObjects: Layer[] = [layer1, layer2, layer3, layer4, layer5]
+    const layer1Ref = useRef<Layer>(undefined);
+    const layer2Ref = useRef<Layer>(undefined);
+    const layer3Ref = useRef<Layer>(undefined);
+    const layer4Ref = useRef<Layer>(undefined);
+    const layer5Ref = useRef<Layer>(undefined);
+    //const [gameObjects, setGameObjects] = useState<Layer[]>([]);
 
     // Image phases for each sprite sequence.
     interface StatePhase {
@@ -180,7 +111,6 @@ function App() {
         x: number;
         y: number
     }
-
     const spriteAnimationsRef = useRef<{ [key: string]: { location: SpriteCoords[] } }>({});
 
     // To show render events.
@@ -214,6 +144,7 @@ function App() {
 
         // Skip the frame if the image not loaded.
         if (!image.complete) {
+            console.log('Image not completed!');
             animationIdRef.current = requestAnimationFrame(animate);
             return;
         }
@@ -244,10 +175,22 @@ function App() {
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
                 // Draw the backgrounds.
-                gameObjects.forEach(layer => layer.update().draw());
+                //gameObjects.forEach(layer => layer.update().draw());
+                if (layer1Ref.current && layer2Ref.current && layer3Ref.current && layer4Ref.current && layer5Ref.current) {
+                    //console.log("DRAWING LAYER1", layer1Ref.current);
+                    layer1Ref.current.update().draw();
+                    layer2Ref.current.update().draw();
+                    layer3Ref.current.update().draw();
+                    layer4Ref.current.update().draw();
+                    layer5Ref.current.update().draw();
+                } else {
+                    console.log("NO LAYER!");
+                }
 
                 // Draw the dog.
                 ctx.drawImage(image, spriteCoordinates.x, spriteCoordinates.y, SPRITE_WIDTH, SPRITE_HEIGHT, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
+            } else {
+                console.log("NO ctx OR spriteCoordinates");
             }
 
             if (spritePhaseToShowIdxRef.current >= locationArr.length) {
@@ -259,6 +202,19 @@ function App() {
     }
 
     const startAnimation = () => {
+
+        if (!canvasRef.current) {
+            console.log("No Canvas!");
+        }
+
+        if (!backgroundImageRef_1.current) {
+            console.log("No Background image!");
+        }
+
+        //const gameObjects: Layer[] = [layer1, layer2, layer3, layer4, layer5]
+        //const gameObjects: Layer[] = [layer1]
+        //setGameObjects(gameObjects);
+
         if (animationIdRef.current) {
             cancelAnimationFrame(animationIdRef.current);
         }
@@ -332,8 +288,20 @@ function App() {
 
         playerImageRef.current.src = playerImageSrc;
 
-        // Start animations immediately.
+        const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
+        const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
+        const layer3 = new Layer("3", canvasRef, backgroundImageRef_3, gameSpeed, 0.6)
+        const layer4 = new Layer("4", canvasRef, backgroundImageRef_4, gameSpeed, 0.8)
+        const layer5 = new Layer("5", canvasRef, backgroundImageRef_5, gameSpeed, 1.0)
+        layer1Ref.current = layer1;
+        layer2Ref.current = layer2;
+        layer3Ref.current = layer3;
+        layer4Ref.current = layer4;
+        layer5Ref.current = layer5;
 
+        console.log("Layer1 Created", layer1);
+
+        // Start animations immediately.
         loadBackgroundImages()
             .then(value => {
                 startAnimation();
@@ -352,6 +320,19 @@ function App() {
         startAnimation();
     }, [playerState]);
 
+    useEffect(() => {
+         console.log("===> Game speed changed");
+         if (layer1Ref.current && layer2Ref.current && layer3Ref.current && layer4Ref.current && layer5Ref.current) {
+             layer1Ref.current.changeGameSpeed(gameSpeed);
+             layer2Ref.current.changeGameSpeed(gameSpeed);
+             layer3Ref.current.changeGameSpeed(gameSpeed);
+             layer4Ref.current.changeGameSpeed(gameSpeed);
+             layer5Ref.current.changeGameSpeed(gameSpeed);
+         } else {
+             console.log("===> NO layer1Ref.current");
+         }
+    }, [gameSpeed]);
+
     const changePlayerState = (newState: string) => {
         setPlayerState(newState);
         spritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
@@ -361,7 +342,7 @@ function App() {
         console.log("NEW SPEED", newSpeed);
         setGameSpeed(newSpeed);
         // Draw the backgrounds.
-        gameObjects.forEach(layer => layer.changeGameSpeed(newSpeed));
+        //gameObjects.forEach(layer => layer.changeGameSpeed(newSpeed));
     }
 
     return (
@@ -386,7 +367,7 @@ function App() {
                 </select>
                 <div id="gameSpeed">
                     <p>Game speed: <span id="gameSpeed">{gameSpeed}</span></p>
-                    <input type="range" id="slider" className="slider" value={gameSpeed} min="0" max="30" step="1"
+                    <input type="range" id="slider" className="slider" value={gameSpeed} min="0" max="40" step="1"
                            onChange={(e) => {
                                changeGameSpeed(Number(e.target.value))
                            }}/>
