@@ -8,31 +8,35 @@ select, option, p {
 }
 
 div {
-    border: 1px solid white;
+    /*border: 1px solid white;*/
 }
 
 #App {
     font-size: calc(10px + 2vmin);
     display: flex;
-    flex-flow: row nowrap;
+    flex-flow: column nowrap;
 }
 
-#controls {
-    justify-content: center;
+
+#canvas {
     position: absolute;
-    width: 800px;
-    transform: translate(-50%, -50%);
-    top: 75%;
-    left: 40%;
-}
-
-#canvas1 {
-    position: relative;
     width: 800px;
     height: 700px;
     transform: translate(-50%, -50%);
-    top: 50%;
+    top: 40%;
     left: 50%;
+}
+
+#controls {
+    position: absolute;
+    width: 800px;
+    transform: translate(-50%, -50%);
+    top: 80%;
+    left: 50%;
+}
+
+#game-speed {
+
 }
 
 #slider {

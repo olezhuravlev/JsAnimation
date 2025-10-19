@@ -37,8 +37,6 @@ export class Layer {
     update() {
 
         const offset = Math.floor(this.stepWidth * this.speedModifier);
-        //console.log(`update background ${this.id} stepWidth:`, this.stepWidth);
-        //console.log(`update background ${this.id} offset:`, offset);
 
         // Make another step by "offset" pixels.
         if (this.x <= -this.width) {

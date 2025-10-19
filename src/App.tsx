@@ -1,9 +1,16 @@
 import React, {RefObject, useEffect, useRef, useState} from 'react';
 import './App.css';
 import {Layer} from "./Layer";
+import {dogPhases, fillDogSpriteAnimations} from "./Dog";
+import {enemy1Phases, enemy2Phases, enemy3Phases, enemy4Phases, fillEnemySpriteAnimations} from "./Enemies";
 
 // Case 1: The image is in 'public' folder.
 const playerImageSrc = '/image/png/shadow_dog.png';
+
+const enemy1ImageSrc = '/image/png/enemy1.png';
+const enemy2ImageSrc = '/image/png/enemy2.png';
+const enemy3ImageSrc = '/image/png/enemy3.png';
+const enemy4ImageSrc = '/image/png/enemy4.png';
 
 const backgroundImageSrc_1 = '/image/png/layer-1.png';
 const backgroundImageSrc_2 = '/image/png/layer-2.png';
@@ -18,17 +25,49 @@ export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 700;
 
 const FROZEN_FRAMES = 3;
-const SPRITE_WIDTH = 575;
-const SPRITE_HEIGHT = 523;
 const GAME_SPEED_INITIAL = 13;
+
+// Image phases for each sprite sequence.
+export interface StatePhase {
+    name: string,
+    framesCount: number,
+    width: number,
+    height: number,
+}
+
+export interface SpriteCoords {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface SpriteCoords {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface SpriteAnimation {
+    location: SpriteCoords[];
+}
+
+export interface SpriteAnimations {
+    [key: string]: SpriteAnimation;
+}
 
 function App() {
 
     // useState - invokes rerender.
     // Ref - keeps state until the page refreshed. Doesn't invoke rerender.
 
-    // Image row to show.
+    // Row of images to show.
     const [playerState, setPlayerState] = useState("run");
+    const [enemy1State, setEnemy1State] = useState("run");
+    const [enemy2State, setEnemy2State] = useState("run");
+    const [enemy3State, setEnemy3State] = useState("run");
+    const [enemy4State, setEnemy4State] = useState("run");
 
     // Game scrolling speed.
     const [gameSpeed, setGameSpeed] = useState<number>(GAME_SPEED_INITIAL);
@@ -44,6 +83,10 @@ function App() {
 
     // Source image for all sprites.
     const playerImageRef = useRef<HTMLImageElement>(new Image());
+    const enemy1ImageRef = useRef<HTMLImageElement>(new Image());
+    const enemy2ImageRef = useRef<HTMLImageElement>(new Image());
+    const enemy3ImageRef = useRef<HTMLImageElement>(new Image());
+    const enemy4ImageRef = useRef<HTMLImageElement>(new Image());
 
     const backgroundImageRef_1 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_2 = useRef<HTMLImageElement>(new Image());
@@ -51,99 +94,48 @@ function App() {
     const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
 
-    const layer1Ref = useRef<Layer>(undefined);
-    const layer2Ref = useRef<Layer>(undefined);
-    const layer3Ref = useRef<Layer>(undefined);
-    const layer4Ref = useRef<Layer>(undefined);
-    const layer5Ref = useRef<Layer>(undefined);
-    //const [gameObjects, setGameObjects] = useState<Layer[]>([]);
+    const layersRef = useRef<Layer[]>([]);
 
-    // Image phases for each sprite sequence.
-    interface StatePhase {
-        name: string,
-        framesCount: number
-    }
+    const dogAnimationStatesRef = useRef<StatePhase[]>(dogPhases);
+    const enemy1AnimationStatesRef = useRef<StatePhase[]>(enemy1Phases);
+    const enemy2AnimationStatesRef = useRef<StatePhase[]>(enemy2Phases);
+    const enemy3AnimationStatesRef = useRef<StatePhase[]>(enemy3Phases);
+    const enemy4AnimationStatesRef = useRef<StatePhase[]>(enemy4Phases);
 
-    const animationStatesRef = useRef<StatePhase[]>([
-        {
-            name: 'idle',
-            framesCount: 7,
-        },
-        {
-            name: 'jump',
-            framesCount: 7,
-        },
-        {
-            name: 'fall',
-            framesCount: 7,
-        },
-        {
-            name: 'run',
-            framesCount: 9,
-        },
-        {
-            name: 'dizzy',
-            framesCount: 11,
-        },
-        {
-            name: 'sit',
-            framesCount: 5,
-        },
-        {
-            name: 'roll',
-            framesCount: 7,
-        },
-        {
-            name: 'bite',
-            framesCount: 7,
-        },
-        {
-            name: 'ko',
-            framesCount: 12,
-        },
-        {
-            name: 'hit',
-            framesCount: 4,
-        }
-    ]);
-
-    interface SpriteCoords {
-        x: number;
-        y: number
-    }
-    const spriteAnimationsRef = useRef<{ [key: string]: { location: SpriteCoords[] } }>({});
+    const playerSpriteAnimationsRef = useRef<SpriteAnimations>({});
+    const enemy1SpriteAnimationsRef = useRef<SpriteAnimations>({});
+    const enemy2SpriteAnimationsRef = useRef<SpriteAnimations>({});
+    const enemy3SpriteAnimationsRef = useRef<SpriteAnimations>({});
+    const enemy4SpriteAnimationsRef = useRef<SpriteAnimations>({});
 
     // To show render events.
     const renderCountRef = useRef(0);
 
     // Index of phase picture to show.
-    const spritePhaseToShowIdxRef = useRef(0);
+    const playerSpritePhaseToShowIdxRef = useRef(0);
+    const enemy1SpritePhaseToShowIdxRef = useRef(0);
+    const enemy2SpritePhaseToShowIdxRef = useRef(0);
+    const enemy3SpritePhaseToShowIdxRef = useRef(0);
+    const enemy4SpritePhaseToShowIdxRef = useRef(0);
 
     const animationIdRef = useRef<number>(0);
 
     // Fill in sprite positions array.
-    const fillAnimations = () => {
-        animationStatesRef.current.forEach((state, idx) => {
-            let frames = {
-                location: [] as SpriteCoords[],
-            }
-            for (let frameIdx = 0; frameIdx < state.framesCount; frameIdx++) {
-                let positionX = frameIdx * SPRITE_WIDTH;
-                let positionY = idx * SPRITE_HEIGHT;
-                frames.location.push({x: positionX, y: positionY});
-            }
-            spriteAnimationsRef.current[state.name] = frames;
-        })
-    }
+    const fillDogAnimations = () => fillDogSpriteAnimations(dogAnimationStatesRef, playerSpriteAnimationsRef);
+    const fillEnemy1Animations = () => fillEnemySpriteAnimations(enemy1AnimationStatesRef, enemy1SpriteAnimationsRef);
+    const fillEnemy2Animations = () => fillEnemySpriteAnimations(enemy2AnimationStatesRef, enemy2SpriteAnimationsRef);
+    const fillEnemy3Animations = () => fillEnemySpriteAnimations(enemy3AnimationStatesRef, enemy3SpriteAnimationsRef);
+    const fillEnemy4Animations = () => fillEnemySpriteAnimations(enemy4AnimationStatesRef, enemy4SpriteAnimationsRef);
 
     const animate = (timestamp: number) => {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        const image = playerImageRef.current;
+        const playerImage = playerImageRef.current;
+        const enemy1Image = enemy1ImageRef.current;
 
         // Skip the frame if the image not loaded.
-        if (!image.complete) {
+        if (!playerImage.complete || !enemy1Image.complete) {
             console.log('Image not completed!');
             animationIdRef.current = requestAnimationFrame(animate);
             return;
@@ -161,40 +153,52 @@ function App() {
         ++frameCounterRef.current;
         if (frameCounterRef.current % FROZEN_FRAMES === 0) {
 
-            const currentAnimation = spriteAnimationsRef.current[playerState];
-            if (!currentAnimation) {
+            const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
+            if (!currentPlayerAnimation) {
                 animationIdRef.current = requestAnimationFrame(animate);
                 return;
             }
+            const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
+            const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
 
-            const locationArr: SpriteCoords[] = currentAnimation.location;
-            const spriteCoordinates = locationArr[spritePhaseToShowIdxRef.current++];
 
-            if (ctx && spriteCoordinates) {
+            const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
+            if (!currentEnemy1Animation) {
+                animationIdRef.current = requestAnimationFrame(animate);
+                return;
+            }
+            const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
+            const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
+
+            if (ctx && playerSpriteCoordinates) {
 
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
                 // Draw the backgrounds.
-                //gameObjects.forEach(layer => layer.update().draw());
-                if (layer1Ref.current && layer2Ref.current && layer3Ref.current && layer4Ref.current && layer5Ref.current) {
-                    //console.log("DRAWING LAYER1", layer1Ref.current);
-                    layer1Ref.current.update().draw();
-                    layer2Ref.current.update().draw();
-                    layer3Ref.current.update().draw();
-                    layer4Ref.current.update().draw();
-                    layer5Ref.current.update().draw();
+                if (layersRef.current && layersRef.current.length > 0) {
+                    layersRef.current.forEach(layer => layer.update().draw())
                 } else {
-                    console.log("NO LAYER!");
+                    console.log("NO BACKGROUND LAYERS!");
                 }
 
                 // Draw the dog.
-                ctx.drawImage(image, spriteCoordinates.x, spriteCoordinates.y, SPRITE_WIDTH, SPRITE_HEIGHT, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
+                ctx.drawImage(playerImage, playerSpriteCoordinates.x, playerSpriteCoordinates.y, playerSpriteCoordinates.width, playerSpriteCoordinates.height, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
+
+                // Draw the enemies.
+                ctx.drawImage(enemy1Image, enemy1SpriteCoordinates.x, enemy1SpriteCoordinates.y, enemy1SpriteCoordinates.width, enemy1SpriteCoordinates.height, 600, 100, 293/3, 155/3);
+                //ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 293/3, 155/3);
+                //ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 293/3, 155/3);
+                //ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 293/3, 155/3);
             } else {
                 console.log("NO ctx OR spriteCoordinates");
             }
 
-            if (spritePhaseToShowIdxRef.current >= locationArr.length) {
-                spritePhaseToShowIdxRef.current = 0;
+            if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
+                playerSpritePhaseToShowIdxRef.current = 0;
+            }
+
+            if (enemy1SpritePhaseToShowIdxRef.current >= enemy1SpritesLocationArr.length) {
+                enemy1SpritePhaseToShowIdxRef.current = 0;
             }
         }
 
@@ -211,50 +215,51 @@ function App() {
             console.log("No Background image!");
         }
 
-        //const gameObjects: Layer[] = [layer1, layer2, layer3, layer4, layer5]
-        //const gameObjects: Layer[] = [layer1]
-        //setGameObjects(gameObjects);
-
         if (animationIdRef.current) {
             cancelAnimationFrame(animationIdRef.current);
         }
         animationIdRef.current = requestAnimationFrame(animate);
     }
 
-    const loadBackgroundImage = (backgroundImageRef: RefObject<HTMLImageElement>, backgroundImageSrc: string, title: string): Promise<void> => {
+    const loadImage = (imageRef: RefObject<HTMLImageElement>, imageSrc: string, title: string): Promise<void> => {
 
         return new Promise((resolve, reject) => {
 
-            if (!backgroundImageRef.current) {
-                reject(new Error(`BACKGROUND IMAGE REF FOR ${title} IN NULL!`));
+            if (!imageRef.current) {
+                reject(new Error(`IMAGE REF FOR ${title} IN NULL!`));
                 return;
             }
 
-            backgroundImageRef.current.onload = () => {
-                console.log(`===> BACKGROUND IMAGE ${title} LOADED`);
+            imageRef.current.onload = () => {
+                console.log(`===> IMAGE ${title} LOADED`);
                 resolve();
             }
-            backgroundImageRef.current.onerror = () => {
-                const msg: string = `===> FAILED TO LOAD BACKGROUND IMAGE ${title}!`;
+            imageRef.current.onerror = () => {
+                const msg: string = `===> FAILED TO LOAD IMAGE ${title}!`;
                 console.error(msg);
                 reject(new Error(msg));
             };
 
-            backgroundImageRef.current.src = backgroundImageSrc;
+            imageRef.current.src = imageSrc;
         })
     }
 
-    const loadBackgroundImages = async () => {
+    const loadImages = async () => {
 
-        console.log("===> *** LOAD IMAGES ***", renderCountRef.current++);
+        console.log("===> *** LOADING IMAGES ***", renderCountRef.current++);
 
         try {
             await Promise.all([
-                loadBackgroundImage(backgroundImageRef_1, backgroundImageSrc_1, "1"),
-                loadBackgroundImage(backgroundImageRef_2, backgroundImageSrc_2, "2"),
-                loadBackgroundImage(backgroundImageRef_3, backgroundImageSrc_3, "3"),
-                loadBackgroundImage(backgroundImageRef_4, backgroundImageSrc_4, "4"),
-                loadBackgroundImage(backgroundImageRef_5, backgroundImageSrc_5, "5"),
+                loadImage(playerImageRef, playerImageSrc, "player"),
+                loadImage(backgroundImageRef_1, backgroundImageSrc_1, "bg_1"),
+                loadImage(backgroundImageRef_2, backgroundImageSrc_2, "bg_2"),
+                loadImage(backgroundImageRef_3, backgroundImageSrc_3, "bg_3"),
+                loadImage(backgroundImageRef_4, backgroundImageSrc_4, "bg_4"),
+                loadImage(backgroundImageRef_5, backgroundImageSrc_5, "bg_5"),
+                loadImage(enemy1ImageRef, enemy1ImageSrc, "en_1"),
+                loadImage(enemy2ImageRef, enemy2ImageSrc, "en_2"),
+                loadImage(enemy3ImageRef, enemy3ImageSrc, "en_3"),
+                loadImage(enemy4ImageRef, enemy4ImageSrc, "en_4"),
             ]);
             console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
         } catch (error) {
@@ -275,34 +280,21 @@ function App() {
         ctx.canvas.width = CANVAS_WIDTH;
         ctx.canvas.height = CANVAS_HEIGHT;
 
-        fillAnimations();
-
-        playerImageRef.current.onload = () => {
-            console.log("===> PLAYER IMAGE LOADED");
-            startAnimation();
-        }
-
-        playerImageRef.current.onerror = () => {
-            console.error("===> FAILED TO LOAD PLAYER IMAGE!");
-        };
-
-        playerImageRef.current.src = playerImageSrc;
+        fillDogAnimations();
+        fillEnemy1Animations();
+        fillEnemy2Animations();
+        fillEnemy3Animations();
+        fillEnemy4Animations();
 
         const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
         const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
         const layer3 = new Layer("3", canvasRef, backgroundImageRef_3, gameSpeed, 0.6)
         const layer4 = new Layer("4", canvasRef, backgroundImageRef_4, gameSpeed, 0.8)
         const layer5 = new Layer("5", canvasRef, backgroundImageRef_5, gameSpeed, 1.0)
-        layer1Ref.current = layer1;
-        layer2Ref.current = layer2;
-        layer3Ref.current = layer3;
-        layer4Ref.current = layer4;
-        layer5Ref.current = layer5;
-
-        console.log("Layer1 Created", layer1);
+        layersRef.current.push(layer1, layer2, layer3, layer4, layer5);
 
         // Start animations immediately.
-        loadBackgroundImages()
+        loadImages()
             .then(value => {
                 startAnimation();
                 return () => {
@@ -315,42 +307,37 @@ function App() {
 
     // Restart animations after state changed.
     useEffect(() => {
-        spritePhaseToShowIdxRef.current = 0;
+        playerSpritePhaseToShowIdxRef.current = 0;
         frameCounterRef.current = 0;
         startAnimation();
     }, [playerState]);
 
     useEffect(() => {
-         console.log("===> Game speed changed");
-         if (layer1Ref.current && layer2Ref.current && layer3Ref.current && layer4Ref.current && layer5Ref.current) {
-             layer1Ref.current.changeGameSpeed(gameSpeed);
-             layer2Ref.current.changeGameSpeed(gameSpeed);
-             layer3Ref.current.changeGameSpeed(gameSpeed);
-             layer4Ref.current.changeGameSpeed(gameSpeed);
-             layer5Ref.current.changeGameSpeed(gameSpeed);
-         } else {
-             console.log("===> NO layer1Ref.current");
-         }
+        console.log("===> Game speed changed");
+        if (layersRef?.current.length > 0) {
+            layersRef.current.forEach(layer => layer.changeGameSpeed(gameSpeed));
+        } else {
+            console.log("===> NO layerRef.current");
+        }
     }, [gameSpeed]);
 
     const changePlayerState = (newState: string) => {
         setPlayerState(newState);
-        spritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
+        playerSpritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
     }
 
     const changeGameSpeed = (newSpeed: number) => {
         console.log("NEW SPEED", newSpeed);
         setGameSpeed(newSpeed);
-        // Draw the backgrounds.
-        //gameObjects.forEach(layer => layer.changeGameSpeed(newSpeed));
     }
 
     return (
         <div id="App">
-            <div>
-                <canvas id={"canvas1"} ref={canvasRef}/>
+            <div id="canvas">
+                <canvas id={"canvas-elem"} ref={canvasRef}/>
             </div>
             <div id="controls">
+                <div id="choose-animations"></div>
                 <label htmlFor="animations">Choose Animation:</label>
                 <select id="animations" name="animations" defaultValue={"run"}
                         onChange={(e) => changePlayerState(e.target.value)}>
@@ -365,38 +352,16 @@ function App() {
                     <option value="ko">Get killed</option>
                     <option value="hit">Get hit</option>
                 </select>
-                <div id="gameSpeed">
-                    <p>Game speed: <span id="gameSpeed">{gameSpeed}</span></p>
+                <div id="game-speed">
+                    <p>Game speed: <span id="game-speed-span">{gameSpeed}</span></p>
                     <input type="range" id="slider" className="slider" value={gameSpeed} min="0" max="40" step="1"
                            onChange={(e) => {
                                changeGameSpeed(Number(e.target.value))
                            }}/>
                 </div>
             </div>
-
-            {/* Simple version */}
-            {/*<SimpleTriangle/>*/}
-
-            {/*<SimpleTriangle color="red" x1={50} y1={50} x2={150} y2={50} x3={250} y3={250}/>*/}
-
-            {/* Simple triangle */}
-            {/*<TriangleCanvas/>*/}
-
-            {/* Custom triangle */}
-            {/*<TriangleCanvas width={300} height={300}*/}
-            {/*                points={[{x: 150, y: 50}, {x: 50, y: 250}, {x: 250, y: 250}]}*/}
-            {/*                fillColor="#e74c3c"*/}
-            {/*                strokeColor="#c0392b"*/}
-            {/*                strokeWidth={3}/>*/}
-
-            {/* Equilateral triangle */}
-            {/*<TriangleCanvas*/}
-            {/*    points={[{x: 200, y: 100}, {x: 100, y: 250}, {x: 300, y: 250}]}*/}
-            {/*    fillColor="#2ecc71"*/}
-            {/*    strokeColor="#000"*/}
-            {/*/>*/}
         </div>
-    );
+    )
 }
 
 export default App;
