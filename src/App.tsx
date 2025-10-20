@@ -1,8 +1,7 @@
 import React, {RefObject, useEffect, useRef, useState} from 'react';
 import './App.css';
 import {Layer} from "./Layer";
-import {dogPhases, fillDogSpriteAnimations} from "./Dog";
-import {enemy1Phases, enemy2Phases, enemy3Phases, enemy4Phases, fillEnemySpriteAnimations} from "./Enemies";
+import {dogPhases, enemy1Phases, enemy2Phases, enemy3Phases, enemy4Phases, fillSpriteAnimations} from "./Creature";
 
 // Case 1: The image is in 'public' folder.
 const playerImageSrc = '/image/png/shadow_dog.png';
@@ -121,11 +120,11 @@ function App() {
     const animationIdRef = useRef<number>(0);
 
     // Fill in sprite positions array.
-    const fillDogAnimations = () => fillDogSpriteAnimations(dogAnimationStatesRef, playerSpriteAnimationsRef);
-    const fillEnemy1Animations = () => fillEnemySpriteAnimations(enemy1AnimationStatesRef, enemy1SpriteAnimationsRef);
-    const fillEnemy2Animations = () => fillEnemySpriteAnimations(enemy2AnimationStatesRef, enemy2SpriteAnimationsRef);
-    const fillEnemy3Animations = () => fillEnemySpriteAnimations(enemy3AnimationStatesRef, enemy3SpriteAnimationsRef);
-    const fillEnemy4Animations = () => fillEnemySpriteAnimations(enemy4AnimationStatesRef, enemy4SpriteAnimationsRef);
+    const fillDogAnimations = () => fillSpriteAnimations(dogAnimationStatesRef, playerSpriteAnimationsRef);
+    const fillEnemy1Animations = () => fillSpriteAnimations(enemy1AnimationStatesRef, enemy1SpriteAnimationsRef);
+    const fillEnemy2Animations = () => fillSpriteAnimations(enemy2AnimationStatesRef, enemy2SpriteAnimationsRef);
+    const fillEnemy3Animations = () => fillSpriteAnimations(enemy3AnimationStatesRef, enemy3SpriteAnimationsRef);
+    const fillEnemy4Animations = () => fillSpriteAnimations(enemy4AnimationStatesRef, enemy4SpriteAnimationsRef);
 
     const animate = (timestamp: number) => {
 
@@ -133,6 +132,9 @@ function App() {
         const ctx = canvas.getContext('2d');
         const playerImage = playerImageRef.current;
         const enemy1Image = enemy1ImageRef.current;
+        const enemy2Image = enemy2ImageRef.current;
+        const enemy3Image = enemy3ImageRef.current;
+        const enemy4Image = enemy4ImageRef.current;
 
         // Skip the frame if the image not loaded.
         if (!playerImage.complete || !enemy1Image.complete) {
@@ -153,6 +155,7 @@ function App() {
         ++frameCounterRef.current;
         if (frameCounterRef.current % FROZEN_FRAMES === 0) {
 
+            // Dog
             const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
             if (!currentPlayerAnimation) {
                 animationIdRef.current = requestAnimationFrame(animate);
@@ -161,7 +164,7 @@ function App() {
             const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
             const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
 
-
+            // Enemy1
             const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
             if (!currentEnemy1Animation) {
                 animationIdRef.current = requestAnimationFrame(animate);
@@ -169,6 +172,34 @@ function App() {
             }
             const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
             const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
+
+            // Enemy2
+            const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
+            if (!currentEnemy2Animation) {
+                animationIdRef.current = requestAnimationFrame(animate);
+                return;
+            }
+            const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
+            const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
+
+            // Enemy3
+            const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
+            if (!currentEnemy3Animation) {
+                animationIdRef.current = requestAnimationFrame(animate);
+                return;
+            }
+            const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
+            const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
+
+            // Enemy4
+            const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
+            if (!currentEnemy4Animation) {
+                animationIdRef.current = requestAnimationFrame(animate);
+                return;
+            }
+            const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
+            const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
+
 
             if (ctx && playerSpriteCoordinates) {
 
@@ -186,9 +217,9 @@ function App() {
 
                 // Draw the enemies.
                 ctx.drawImage(enemy1Image, enemy1SpriteCoordinates.x, enemy1SpriteCoordinates.y, enemy1SpriteCoordinates.width, enemy1SpriteCoordinates.height, 600, 100, 293/3, 155/3);
-                //ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 293/3, 155/3);
-                //ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 293/3, 155/3);
-                //ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 293/3, 155/3);
+                ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 293/3, 155/3);
+                ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 293/3, 155/3);
+                ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 293/3, 155/3);
             } else {
                 console.log("NO ctx OR spriteCoordinates");
             }
@@ -199,6 +230,18 @@ function App() {
 
             if (enemy1SpritePhaseToShowIdxRef.current >= enemy1SpritesLocationArr.length) {
                 enemy1SpritePhaseToShowIdxRef.current = 0;
+            }
+
+            if (enemy2SpritePhaseToShowIdxRef.current >= enemy2SpritesLocationArr.length) {
+                enemy2SpritePhaseToShowIdxRef.current = 0;
+            }
+
+            if (enemy3SpritePhaseToShowIdxRef.current >= enemy3SpritesLocationArr.length) {
+                enemy3SpritePhaseToShowIdxRef.current = 0;
+            }
+
+            if (enemy4SpritePhaseToShowIdxRef.current >= enemy4SpritesLocationArr.length) {
+                enemy4SpritePhaseToShowIdxRef.current = 0;
             }
         }
 

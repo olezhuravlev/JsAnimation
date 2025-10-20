@@ -1,6 +1,69 @@
 import {SpriteAnimations, SpriteCoords, StatePhase} from "./App";
 import {RefObject} from "react";
 
+export const dogPhases: StatePhase[] = [
+    {
+        name: 'idle',
+        framesCount: 7,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'jump',
+        framesCount: 7,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'fall',
+        framesCount: 7,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'run',
+        framesCount: 9,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'dizzy',
+        framesCount: 11,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'sit',
+        framesCount: 5,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'roll',
+        framesCount: 7,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'bite',
+        framesCount: 7,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'ko',
+        framesCount: 12,
+        width: 575,
+        height: 523
+    },
+    {
+        name: 'hit',
+        framesCount: 4,
+        width: 575,
+        height: 523
+    }
+];
+
 export const enemy1Phases: StatePhase[] = [
     {
         name: 'run',
@@ -32,13 +95,13 @@ export const enemy4Phases: StatePhase[] = [
     {
         name: 'run',
         framesCount: 9,
-        width: 219,
+        width: 213,
         height: 212
     }
 ];
 
-// Fill in Enemy's sprite positions array.
-export const fillEnemySpriteAnimations = (animationStatesRef: RefObject<StatePhase[]>, spriteAnimationsRef: RefObject<SpriteAnimations>) => {
+// Fill in sprite positions array.
+export const fillSpriteAnimations = (animationStatesRef: RefObject<StatePhase[]>, spriteAnimationsRef: RefObject<SpriteAnimations>) => {
     animationStatesRef.current.forEach((state, idx: number) => {
         let frames = {
             location: [] as SpriteCoords[],
