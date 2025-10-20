@@ -1,16 +1,9 @@
 import React, {RefObject, useEffect, useRef, useState} from 'react';
 import './App.css';
 import {Layer} from "./Layer";
-import {dogPhases, enemy1Phases, enemy2Phases, enemy3Phases, enemy4Phases, fillSpriteAnimations} from "./Creature";
+import {Creature} from "./Creature";
 
 // Case 1: The image is in 'public' folder.
-const playerImageSrc = '/image/png/shadow_dog.png';
-
-const enemy1ImageSrc = '/image/png/enemy1.png';
-const enemy2ImageSrc = '/image/png/enemy2.png';
-const enemy3ImageSrc = '/image/png/enemy3.png';
-const enemy4ImageSrc = '/image/png/enemy4.png';
-
 const backgroundImageSrc_1 = '/image/png/layer-1.png';
 const backgroundImageSrc_2 = '/image/png/layer-2.png';
 const backgroundImageSrc_3 = '/image/png/layer-3.png';
@@ -68,6 +61,8 @@ function App() {
     const [enemy3State, setEnemy3State] = useState("run");
     const [enemy4State, setEnemy4State] = useState("run");
 
+    const [creature, setCreature] = useState<Creature[]>([]);
+
     // Game scrolling speed.
     const [gameSpeed, setGameSpeed] = useState<number>(GAME_SPEED_INITIAL);
 
@@ -80,13 +75,7 @@ function App() {
     // Counter to drop frozen frames.
     const frameCounterRef = useRef<number>(0);
 
-    // Source image for all sprites.
-    const playerImageRef = useRef<HTMLImageElement>(new Image());
-    const enemy1ImageRef = useRef<HTMLImageElement>(new Image());
-    const enemy2ImageRef = useRef<HTMLImageElement>(new Image());
-    const enemy3ImageRef = useRef<HTMLImageElement>(new Image());
-    const enemy4ImageRef = useRef<HTMLImageElement>(new Image());
-
+    // Source image for all backgrounds.
     const backgroundImageRef_1 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_2 = useRef<HTMLImageElement>(new Image());
     const backgroundImageRef_3 = useRef<HTMLImageElement>(new Image());
@@ -95,53 +84,22 @@ function App() {
 
     const layersRef = useRef<Layer[]>([]);
 
-    const dogAnimationStatesRef = useRef<StatePhase[]>(dogPhases);
-    const enemy1AnimationStatesRef = useRef<StatePhase[]>(enemy1Phases);
-    const enemy2AnimationStatesRef = useRef<StatePhase[]>(enemy2Phases);
-    const enemy3AnimationStatesRef = useRef<StatePhase[]>(enemy3Phases);
-    const enemy4AnimationStatesRef = useRef<StatePhase[]>(enemy4Phases);
-
-    const playerSpriteAnimationsRef = useRef<SpriteAnimations>({});
-    const enemy1SpriteAnimationsRef = useRef<SpriteAnimations>({});
-    const enemy2SpriteAnimationsRef = useRef<SpriteAnimations>({});
-    const enemy3SpriteAnimationsRef = useRef<SpriteAnimations>({});
-    const enemy4SpriteAnimationsRef = useRef<SpriteAnimations>({});
-
     // To show render events.
     const renderCountRef = useRef(0);
 
-    // Index of phase picture to show.
-    const playerSpritePhaseToShowIdxRef = useRef(0);
-    const enemy1SpritePhaseToShowIdxRef = useRef(0);
-    const enemy2SpritePhaseToShowIdxRef = useRef(0);
-    const enemy3SpritePhaseToShowIdxRef = useRef(0);
-    const enemy4SpritePhaseToShowIdxRef = useRef(0);
-
     const animationIdRef = useRef<number>(0);
-
-    // Fill in sprite positions array.
-    const fillDogAnimations = () => fillSpriteAnimations(dogAnimationStatesRef, playerSpriteAnimationsRef);
-    const fillEnemy1Animations = () => fillSpriteAnimations(enemy1AnimationStatesRef, enemy1SpriteAnimationsRef);
-    const fillEnemy2Animations = () => fillSpriteAnimations(enemy2AnimationStatesRef, enemy2SpriteAnimationsRef);
-    const fillEnemy3Animations = () => fillSpriteAnimations(enemy3AnimationStatesRef, enemy3SpriteAnimationsRef);
-    const fillEnemy4Animations = () => fillSpriteAnimations(enemy4AnimationStatesRef, enemy4SpriteAnimationsRef);
 
     const animate = (timestamp: number) => {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        const playerImage = playerImageRef.current;
-        const enemy1Image = enemy1ImageRef.current;
-        const enemy2Image = enemy2ImageRef.current;
-        const enemy3Image = enemy3ImageRef.current;
-        const enemy4Image = enemy4ImageRef.current;
 
         // Skip the frame if the image not loaded.
-        if (!playerImage.complete || !enemy1Image.complete) {
-            console.log('Image not completed!');
-            animationIdRef.current = requestAnimationFrame(animate);
-            return;
-        }
+        // if (!playerImage.complete || !enemy1Image.complete) {
+        //     console.log('Image not completed!');
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
 
         // FPS control.
         const deltaTime = timestamp - lastTimestampRef.current;
@@ -156,52 +114,51 @@ function App() {
         if (frameCounterRef.current % FROZEN_FRAMES === 0) {
 
             // Dog
-            const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
-            if (!currentPlayerAnimation) {
-                animationIdRef.current = requestAnimationFrame(animate);
-                return;
-            }
-            const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
-            const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
+            // const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
+            // if (!currentPlayerAnimation) {
+            //     animationIdRef.current = requestAnimationFrame(animate);
+            //     return;
+            // }
+            // const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
+            // const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
+            //
+            // // Enemy1
+            // const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
+            // if (!currentEnemy1Animation) {
+            //     animationIdRef.current = requestAnimationFrame(animate);
+            //     return;
+            // }
+            // const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
+            // const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
+            //
+            // // Enemy2
+            // const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
+            // if (!currentEnemy2Animation) {
+            //     animationIdRef.current = requestAnimationFrame(animate);
+            //     return;
+            // }
+            // const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
+            // const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
+            //
+            // // Enemy3
+            // const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
+            // if (!currentEnemy3Animation) {
+            //     animationIdRef.current = requestAnimationFrame(animate);
+            //     return;
+            // }
+            // const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
+            // const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
+            //
+            // // Enemy4
+            // const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
+            // if (!currentEnemy4Animation) {
+            //     animationIdRef.current = requestAnimationFrame(animate);
+            //     return;
+            // }
+            // const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
+            // const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
 
-            // Enemy1
-            const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
-            if (!currentEnemy1Animation) {
-                animationIdRef.current = requestAnimationFrame(animate);
-                return;
-            }
-            const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
-            const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
-
-            // Enemy2
-            const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
-            if (!currentEnemy2Animation) {
-                animationIdRef.current = requestAnimationFrame(animate);
-                return;
-            }
-            const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
-            const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
-
-            // Enemy3
-            const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
-            if (!currentEnemy3Animation) {
-                animationIdRef.current = requestAnimationFrame(animate);
-                return;
-            }
-            const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
-            const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
-
-            // Enemy4
-            const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
-            if (!currentEnemy4Animation) {
-                animationIdRef.current = requestAnimationFrame(animate);
-                return;
-            }
-            const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
-            const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
-
-
-            if (ctx && playerSpriteCoordinates) {
+            if (ctx) {
 
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -213,36 +170,32 @@ function App() {
                 }
 
                 // Draw the dog.
-                ctx.drawImage(playerImage, playerSpriteCoordinates.x, playerSpriteCoordinates.y, playerSpriteCoordinates.width, playerSpriteCoordinates.height, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
+                //ctx.drawImage(playerImage, playerSpriteCoordinates.x, playerSpriteCoordinates.y, playerSpriteCoordinates.width, playerSpriteCoordinates.height, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
 
                 // Draw the enemies.
-                ctx.drawImage(enemy1Image, enemy1SpriteCoordinates.x, enemy1SpriteCoordinates.y, enemy1SpriteCoordinates.width, enemy1SpriteCoordinates.height, 600, 100, 293/3, 155/3);
-                ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 293/3, 155/3);
-                ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 293/3, 155/3);
-                ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 293/3, 155/3);
+                //ctx.drawImage(enemy1Image, enemy1SpriteCoordinates.x, enemy1SpriteCoordinates.y, enemy1SpriteCoordinates.width, enemy1SpriteCoordinates.height, 600, 100, 293/3, 155/3);
+                //ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 266/3, 188/3);
+                //ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 218/3, 177/3);
+                //ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 213/3, 212/3);
             } else {
                 console.log("NO ctx OR spriteCoordinates");
             }
 
-            if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
-                playerSpritePhaseToShowIdxRef.current = 0;
-            }
-
-            if (enemy1SpritePhaseToShowIdxRef.current >= enemy1SpritesLocationArr.length) {
-                enemy1SpritePhaseToShowIdxRef.current = 0;
-            }
-
-            if (enemy2SpritePhaseToShowIdxRef.current >= enemy2SpritesLocationArr.length) {
-                enemy2SpritePhaseToShowIdxRef.current = 0;
-            }
-
-            if (enemy3SpritePhaseToShowIdxRef.current >= enemy3SpritesLocationArr.length) {
-                enemy3SpritePhaseToShowIdxRef.current = 0;
-            }
-
-            if (enemy4SpritePhaseToShowIdxRef.current >= enemy4SpritesLocationArr.length) {
-                enemy4SpritePhaseToShowIdxRef.current = 0;
-            }
+            // if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
+            //     playerSpritePhaseToShowIdxRef.current = 0;
+            // }
+            // if (enemy1SpritePhaseToShowIdxRef.current >= enemy1SpritesLocationArr.length) {
+            //     enemy1SpritePhaseToShowIdxRef.current = 0;
+            // }
+            // if (enemy2SpritePhaseToShowIdxRef.current >= enemy2SpritesLocationArr.length) {
+            //     enemy2SpritePhaseToShowIdxRef.current = 0;
+            // }
+            // if (enemy3SpritePhaseToShowIdxRef.current >= enemy3SpritesLocationArr.length) {
+            //     enemy3SpritePhaseToShowIdxRef.current = 0;
+            // }
+            // if (enemy4SpritePhaseToShowIdxRef.current >= enemy4SpritesLocationArr.length) {
+            //     enemy4SpritePhaseToShowIdxRef.current = 0;
+            // }
         }
 
         animationIdRef.current = requestAnimationFrame(animate);
@@ -293,16 +246,11 @@ function App() {
 
         try {
             await Promise.all([
-                loadImage(playerImageRef, playerImageSrc, "player"),
                 loadImage(backgroundImageRef_1, backgroundImageSrc_1, "bg_1"),
                 loadImage(backgroundImageRef_2, backgroundImageSrc_2, "bg_2"),
                 loadImage(backgroundImageRef_3, backgroundImageSrc_3, "bg_3"),
                 loadImage(backgroundImageRef_4, backgroundImageSrc_4, "bg_4"),
                 loadImage(backgroundImageRef_5, backgroundImageSrc_5, "bg_5"),
-                loadImage(enemy1ImageRef, enemy1ImageSrc, "en_1"),
-                loadImage(enemy2ImageRef, enemy2ImageSrc, "en_2"),
-                loadImage(enemy3ImageRef, enemy3ImageSrc, "en_3"),
-                loadImage(enemy4ImageRef, enemy4ImageSrc, "en_4"),
             ]);
             console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
         } catch (error) {
@@ -322,12 +270,6 @@ function App() {
 
         ctx.canvas.width = CANVAS_WIDTH;
         ctx.canvas.height = CANVAS_HEIGHT;
-
-        fillDogAnimations();
-        fillEnemy1Animations();
-        fillEnemy2Animations();
-        fillEnemy3Animations();
-        fillEnemy4Animations();
 
         const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
         const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
@@ -350,7 +292,6 @@ function App() {
 
     // Restart animations after state changed.
     useEffect(() => {
-        playerSpritePhaseToShowIdxRef.current = 0;
         frameCounterRef.current = 0;
         startAnimation();
     }, [playerState]);
@@ -366,7 +307,7 @@ function App() {
 
     const changePlayerState = (newState: string) => {
         setPlayerState(newState);
-        playerSpritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
+        //playerSpritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
     }
 
     const changeGameSpeed = (newSpeed: number) => {
