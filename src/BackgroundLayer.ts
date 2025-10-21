@@ -1,9 +1,6 @@
-import {RefObject} from "react";
+export class BackgroundLayer {
 
-export class Layer {
-
-    private canvasRef: RefObject<HTMLCanvasElement>;
-    private ctx: CanvasRenderingContext2D | null = null;
+    private ctx: CanvasRenderingContext2D;
 
     private id: string;
     private x: number;
@@ -11,30 +8,34 @@ export class Layer {
     private width: number;
     private height: number;
     private x2: number;
-    private imageRef: RefObject<HTMLImageElement>;
+    private imageRef: HTMLImageElement;
     private stepWidth: number;
     private speedModifier: number;
 
-    constructor(id: string, canvasRef: RefObject<HTMLCanvasElement>, imageRef: RefObject<HTMLImageElement>, stepWidth: number, speedModifier: number) {
+    constructor(id: string, image: HTMLImageElement, stepWidth: number, speedModifier: number, canvasCtx: CanvasRenderingContext2D,) {
+
+        console.log(`LAYER ${id} CONSTRUCTOR!`);
+
         this.id = id;
-        this.canvasRef = canvasRef;
         this.x = 0;
         this.y = 0;
         this.width = 2400;
         this.height = 700;
         this.x2 = this.width;
-        this.imageRef = imageRef;
+        this.imageRef = image;
         this.stepWidth = stepWidth;
         this.speedModifier = speedModifier;
 
-        console.log("LAYER CONSTRUCTOR!");
+        this.ctx = canvasCtx;
     }
 
     changeGameSpeed(stepWidth: number,) {
         this.stepWidth = stepWidth;
     }
 
-    update() {
+    updatePosition() {
+
+        //console.log(`LAYER ${this.id} UPDATE!`);
 
         const offset = Math.floor(this.stepWidth * this.speedModifier);
 
@@ -58,15 +59,12 @@ export class Layer {
     }
 
     draw() {
-
         //console.log("DRAW!");
-
-        if (!this.ctx) {
-            this.ctx = this.canvasRef.current.getContext('2d');
-        }
         if (this.ctx) {
-            this.ctx.drawImage(this.imageRef.current, this.x, this.y, this.width, this.height);
-            this.ctx.drawImage(this.imageRef.current, this.x2, this.y, this.width, this.height);
+            this.ctx.drawImage(this.imageRef, this.x, this.y, this.width, this.height);
+            this.ctx.drawImage(this.imageRef, this.x2, this.y, this.width, this.height);
+        } else {
+            console.error(`No canvas context for background layer ${this.id}!`);
         }
     }
 }

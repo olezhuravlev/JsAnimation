@@ -1,6 +1,6 @@
-import React, {RefObject, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
-import {Layer} from "./Layer";
+import {BackgroundLayer} from "./BackgroundLayer";
 import {Creature} from "./Creature";
 
 // Case 1: The image is in 'public' folder.
@@ -16,58 +16,16 @@ const backgroundImageSrc_5 = '/image/png/layer-5.png';
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 700;
 
-const FROZEN_FRAMES = 3;
-const GAME_SPEED_INITIAL = 13;
-
-// Image phases for each sprite sequence.
-export interface StatePhase {
-    name: string,
-    framesCount: number,
-    width: number,
-    height: number,
-}
-
-export interface SpriteCoords {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-export interface SpriteCoords {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-interface SpriteAnimation {
-    location: SpriteCoords[];
-}
-
-export interface SpriteAnimations {
-    [key: string]: SpriteAnimation;
-}
+const FROZEN_FRAMES = 2;
+const SCROLL_SPEED_INITIAL = 10;
 
 function App() {
 
-    // useState - invokes rerender.
-    // Ref - keeps state until the page refreshed. Doesn't invoke rerender.
-
-    // Row of images to show.
+    // Player animation.
     const [playerState, setPlayerState] = useState("run");
-    const [enemy1State, setEnemy1State] = useState("run");
-    const [enemy2State, setEnemy2State] = useState("run");
-    const [enemy3State, setEnemy3State] = useState("run");
-    const [enemy4State, setEnemy4State] = useState("run");
-
-    const [creature, setCreature] = useState<Creature[]>([]);
 
     // Game scrolling speed.
-    const [gameSpeed, setGameSpeed] = useState<number>(GAME_SPEED_INITIAL);
-
-    // Canvas itself.
-    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
+    const [scrollSpeed, setScrollSpeed] = useState<number>(SCROLL_SPEED_INITIAL);
 
     // FPS control time.
     const lastTimestampRef = useRef<number>(0);
@@ -75,31 +33,25 @@ function App() {
     // Counter to drop frozen frames.
     const frameCounterRef = useRef<number>(0);
 
-    // Source image for all backgrounds.
-    const backgroundImageRef_1 = useRef<HTMLImageElement>(new Image());
-    const backgroundImageRef_2 = useRef<HTMLImageElement>(new Image());
-    const backgroundImageRef_3 = useRef<HTMLImageElement>(new Image());
-    const backgroundImageRef_4 = useRef<HTMLImageElement>(new Image());
-    const backgroundImageRef_5 = useRef<HTMLImageElement>(new Image());
+    // Canvas itself.
+    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
 
-    const layersRef = useRef<Layer[]>([]);
+    // Canvas context.
+    const canvasCtxRef = useRef<CanvasRenderingContext2D | null>(null as unknown as CanvasRenderingContext2D);
 
-    // To show render events.
-    const renderCountRef = useRef(0);
-
+    // Used for stopping animation.
     const animationIdRef = useRef<number>(0);
+
+    // Background layers.
+    const backgroundLayersRef = useRef<BackgroundLayer[]>([]);
+
+    // All the creatures on the canvas.
+    const creaturesRef = useRef<Creature[]>([]);
 
     const animate = (timestamp: number) => {
 
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-
-        // Skip the frame if the image not loaded.
-        // if (!playerImage.complete || !enemy1Image.complete) {
-        //     console.log('Image not completed!');
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
+        canvasCtxRef.current = canvas.getContext('2d');
 
         // FPS control.
         const deltaTime = timestamp - lastTimestampRef.current;
@@ -113,89 +65,21 @@ function App() {
         ++frameCounterRef.current;
         if (frameCounterRef.current % FROZEN_FRAMES === 0) {
 
-            // Dog
-            // const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
-            // if (!currentPlayerAnimation) {
-            //     animationIdRef.current = requestAnimationFrame(animate);
-            //     return;
-            // }
-            // const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
-            // const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
-            //
-            // // Enemy1
-            // const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
-            // if (!currentEnemy1Animation) {
-            //     animationIdRef.current = requestAnimationFrame(animate);
-            //     return;
-            // }
-            // const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
-            // const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
-            //
-            // // Enemy2
-            // const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
-            // if (!currentEnemy2Animation) {
-            //     animationIdRef.current = requestAnimationFrame(animate);
-            //     return;
-            // }
-            // const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
-            // const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
-            //
-            // // Enemy3
-            // const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
-            // if (!currentEnemy3Animation) {
-            //     animationIdRef.current = requestAnimationFrame(animate);
-            //     return;
-            // }
-            // const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
-            // const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
-            //
-            // // Enemy4
-            // const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
-            // if (!currentEnemy4Animation) {
-            //     animationIdRef.current = requestAnimationFrame(animate);
-            //     return;
-            // }
-            // const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
-            // const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
+            if (canvasCtxRef.current) {
 
-            if (ctx) {
+                console.log("BG LAYERS", backgroundLayersRef.current.length, "CREATURES", creaturesRef.current.length);
 
-                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                canvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
                 // Draw the backgrounds.
-                if (layersRef.current && layersRef.current.length > 0) {
-                    layersRef.current.forEach(layer => layer.update().draw())
-                } else {
-                    console.log("NO BACKGROUND LAYERS!");
-                }
+                backgroundLayersRef.current.forEach(layer => layer.updatePosition().draw())
 
-                // Draw the dog.
-                //ctx.drawImage(playerImage, playerSpriteCoordinates.x, playerSpriteCoordinates.y, playerSpriteCoordinates.width, playerSpriteCoordinates.height, 300, 460, CANVAS_WIDTH / 5, CANVAS_HEIGHT / 5);
+                // Draw all the creatures.
+                creaturesRef.current.forEach(creature => creature.move());
 
-                // Draw the enemies.
-                //ctx.drawImage(enemy1Image, enemy1SpriteCoordinates.x, enemy1SpriteCoordinates.y, enemy1SpriteCoordinates.width, enemy1SpriteCoordinates.height, 600, 100, 293/3, 155/3);
-                //ctx.drawImage(enemy2Image, enemy2SpriteCoordinates.x, enemy2SpriteCoordinates.y, enemy2SpriteCoordinates.width, enemy2SpriteCoordinates.height, 600, 200, 266/3, 188/3);
-                //ctx.drawImage(enemy3Image, enemy3SpriteCoordinates.x, enemy3SpriteCoordinates.y, enemy3SpriteCoordinates.width, enemy3SpriteCoordinates.height, 600, 300, 218/3, 177/3);
-                //ctx.drawImage(enemy4Image, enemy4SpriteCoordinates.x, enemy4SpriteCoordinates.y, enemy4SpriteCoordinates.width, enemy4SpriteCoordinates.height, 600, 400, 213/3, 212/3);
             } else {
                 console.log("NO ctx OR spriteCoordinates");
             }
-
-            // if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
-            //     playerSpritePhaseToShowIdxRef.current = 0;
-            // }
-            // if (enemy1SpritePhaseToShowIdxRef.current >= enemy1SpritesLocationArr.length) {
-            //     enemy1SpritePhaseToShowIdxRef.current = 0;
-            // }
-            // if (enemy2SpritePhaseToShowIdxRef.current >= enemy2SpritesLocationArr.length) {
-            //     enemy2SpritePhaseToShowIdxRef.current = 0;
-            // }
-            // if (enemy3SpritePhaseToShowIdxRef.current >= enemy3SpritesLocationArr.length) {
-            //     enemy3SpritePhaseToShowIdxRef.current = 0;
-            // }
-            // if (enemy4SpritePhaseToShowIdxRef.current >= enemy4SpritesLocationArr.length) {
-            //     enemy4SpritePhaseToShowIdxRef.current = 0;
-            // }
         }
 
         animationIdRef.current = requestAnimationFrame(animate);
@@ -203,13 +87,7 @@ function App() {
 
     const startAnimation = () => {
 
-        if (!canvasRef.current) {
-            console.log("No Canvas!");
-        }
-
-        if (!backgroundImageRef_1.current) {
-            console.log("No Background image!");
-        }
+        console.log("===> START ANIMATION!");
 
         if (animationIdRef.current) {
             cancelAnimationFrame(animationIdRef.current);
@@ -217,69 +95,57 @@ function App() {
         animationIdRef.current = requestAnimationFrame(animate);
     }
 
-    const loadImage = (imageRef: RefObject<HTMLImageElement>, imageSrc: string, title: string): Promise<void> => {
+    const loadBackgroundLayer = (id: string, stepWidth: number, speedModifier: number, imageSrc: string, ctx: CanvasRenderingContext2D): Promise<BackgroundLayer> => {
 
         return new Promise((resolve, reject) => {
 
-            if (!imageRef.current) {
-                reject(new Error(`IMAGE REF FOR ${title} IN NULL!`));
-                return;
+            const element: HTMLImageElement = new Image();
+            element.onload = () => {
+                console.log(`===> IMAGE ${id} LOADED`);
+                resolve(new BackgroundLayer(id, element, stepWidth, speedModifier, ctx));
             }
-
-            imageRef.current.onload = () => {
-                console.log(`===> IMAGE ${title} LOADED`);
-                resolve();
-            }
-            imageRef.current.onerror = () => {
-                const msg: string = `===> FAILED TO LOAD IMAGE ${title}!`;
+            element.onerror = () => {
+                const msg: string = `===> FAILED TO LOAD IMAGE ${id}!`;
                 console.error(msg);
                 reject(new Error(msg));
             };
 
-            imageRef.current.src = imageSrc;
+            element.src = imageSrc;
         })
     }
 
-    const loadImages = async () => {
-
-        console.log("===> *** LOADING IMAGES ***", renderCountRef.current++);
+    const loadBackgroundImages = async (ctx: CanvasRenderingContext2D) => {
 
         try {
-            await Promise.all([
-                loadImage(backgroundImageRef_1, backgroundImageSrc_1, "bg_1"),
-                loadImage(backgroundImageRef_2, backgroundImageSrc_2, "bg_2"),
-                loadImage(backgroundImageRef_3, backgroundImageSrc_3, "bg_3"),
-                loadImage(backgroundImageRef_4, backgroundImageSrc_4, "bg_4"),
-                loadImage(backgroundImageRef_5, backgroundImageSrc_5, "bg_5"),
+            const loadedBackgroundLayers = await Promise.all([
+                loadBackgroundLayer("bg_1", scrollSpeed, 0.1, backgroundImageSrc_1, ctx),
+                loadBackgroundLayer("bg_2", scrollSpeed, 0.2, backgroundImageSrc_2, ctx),
+                loadBackgroundLayer("bg_3", scrollSpeed, 0.3, backgroundImageSrc_3, ctx),
+                loadBackgroundLayer("bg_4", scrollSpeed, 0.5, backgroundImageSrc_4, ctx),
+                loadBackgroundLayer("bg_5", scrollSpeed, 1.0, backgroundImageSrc_5, ctx),
             ]);
-            console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
+            backgroundLayersRef.current = [...loadedBackgroundLayers];
+            console.log("===> ALL BACKGROUND LAYERS LOADED SUCCESSFULLY");
         } catch (error) {
-            console.error("===> SOME IMAGES FAILED TO LOAD:", error);
+            console.error("===> FAILED TO LOAD BACKGROUND LAYERS:", error);
         }
     }
 
     useEffect(() => {
 
-        console.log("===> *** INIT ***", renderCountRef.current++);
-
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.canvas.width = CANVAS_WIDTH;
-        ctx.canvas.height = CANVAS_HEIGHT;
+        canvasCtxRef.current = ctx;
 
-        const layer1 = new Layer("1", canvasRef, backgroundImageRef_1, gameSpeed, 0.2)
-        const layer2 = new Layer("2", canvasRef, backgroundImageRef_2, gameSpeed, 0.4)
-        const layer3 = new Layer("3", canvasRef, backgroundImageRef_3, gameSpeed, 0.6)
-        const layer4 = new Layer("4", canvasRef, backgroundImageRef_4, gameSpeed, 0.8)
-        const layer5 = new Layer("5", canvasRef, backgroundImageRef_5, gameSpeed, 1.0)
-        layersRef.current.push(layer1, layer2, layer3, layer4, layer5);
+        canvasCtxRef.current.canvas.width = CANVAS_WIDTH;
+        canvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
 
         // Start animations immediately.
-        loadImages()
+        loadBackgroundImages(canvasCtxRef.current)
             .then(value => {
                 startAnimation();
                 return () => {
@@ -291,28 +157,27 @@ function App() {
     }, []); // Empty dependencies array - invoked just once after page mount.
 
     // Restart animations after state changed.
-    useEffect(() => {
-        frameCounterRef.current = 0;
-        startAnimation();
-    }, [playerState]);
+    // useEffect(() => {
+    //     frameCounterRef.current = 0;
+    //     startAnimation();
+    // }, [playerState]);
 
     useEffect(() => {
-        console.log("===> Game speed changed");
-        if (layersRef?.current.length > 0) {
-            layersRef.current.forEach(layer => layer.changeGameSpeed(gameSpeed));
+        console.log("===> Scroll speed changed");
+        if (backgroundLayersRef?.current.length > 0) {
+            backgroundLayersRef.current.forEach(layer => layer.changeGameSpeed(scrollSpeed));
         } else {
             console.log("===> NO layerRef.current");
         }
-    }, [gameSpeed]);
+    }, [scrollSpeed]);
 
     const changePlayerState = (newState: string) => {
         setPlayerState(newState);
-        //playerSpritePhaseToShowIdxRef.current = 0; // Reset shown image phase.
     }
 
     const changeGameSpeed = (newSpeed: number) => {
         console.log("NEW SPEED", newSpeed);
-        setGameSpeed(newSpeed);
+        setScrollSpeed(newSpeed);
     }
 
     return (
@@ -337,8 +202,8 @@ function App() {
                     <option value="hit">Get hit</option>
                 </select>
                 <div id="game-speed">
-                    <p>Game speed: <span id="game-speed-span">{gameSpeed}</span></p>
-                    <input type="range" id="slider" className="slider" value={gameSpeed} min="0" max="40" step="1"
+                    <p>Game speed: <span id="game-speed-span">{scrollSpeed}</span></p>
+                    <input type="range" id="slider" className="slider" value={scrollSpeed} min="0" max="40" step="1"
                            onChange={(e) => {
                                changeGameSpeed(Number(e.target.value))
                            }}/>

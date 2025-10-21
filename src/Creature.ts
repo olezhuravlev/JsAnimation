@@ -1,5 +1,3 @@
-import {SpriteAnimations, SpriteCoords, StatePhase} from "./App";
-import {RefObject, useRef} from "react";
 
 const playerImageSrc = '/image/png/shadow_dog.png';
 const enemy1ImageSrc = '/image/png/enemy1.png';
@@ -7,8 +5,32 @@ const enemy2ImageSrc = '/image/png/enemy2.png';
 const enemy3ImageSrc = '/image/png/enemy3.png';
 const enemy4ImageSrc = '/image/png/enemy4.png';
 
+// Image phases for each sprite sequence.
+export interface StatePhase {
+    name: string,
+    framesCount: number,
+    width: number,
+    height: number,
+}
+
+export interface SpriteCoords {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface SpriteAnimation {
+    location: SpriteCoords[];
+}
+
+export interface SpriteAnimations {
+    [key: string]: SpriteAnimation;
+}
+
 export interface Props {
     type: string,
+    state: string,
     animationStates: SpriteAnimations,
     x: number,
     y: number,
@@ -201,6 +223,7 @@ export class Creature {
     dest_Y: number = 0;
     speed_X: number = 0;
     speed_Y: number = 0;
+    state: string = "";
     animationStates: SpriteAnimations = {};
 
     // Index of phase picture to show.
@@ -213,6 +236,7 @@ export class Creature {
         this.dest_Y = props.dest_Y;
         this.speed_X = props.speed_X;
         this.speed_Y = props.speed_Y;
+        this.state = props.state;
         this.animationStates = props.animationStates;
     }
 
@@ -251,6 +275,58 @@ export class Creature {
         // New coords.
         this.x += delta_X;
         this.y += delta_Y;
+
+        // Change current sprite phase.
+        // if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
+        //     playerSpritePhaseToShowIdxRef.current = 0;
+        // }
+
+
+        // Dog
+        // const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
+        // if (!currentPlayerAnimation) {
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
+        // const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
+        // const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
+        //
+        // // Enemy1
+        // const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
+        // if (!currentEnemy1Animation) {
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
+        // const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
+        // const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
+        //
+        // // Enemy2
+        // const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
+        // if (!currentEnemy2Animation) {
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
+        // const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
+        // const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
+        //
+        // // Enemy3
+        // const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
+        // if (!currentEnemy3Animation) {
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
+        // const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
+        // const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
+        //
+        // // Enemy4
+        // const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
+        // if (!currentEnemy4Animation) {
+        //     animationIdRef.current = requestAnimationFrame(animate);
+        //     return;
+        // }
+        // const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
+        // const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
+
     }
 }
 
@@ -276,24 +352,4 @@ const fillInSpriteAnimations = (phases: StatePhase[]): SpriteAnimations => {
     })
 
     return spriteAnimations;
-}
-
-// Fill in sprite positions array.
-export const fillSpriteAnimations = (animationStatesRef: RefObject<StatePhase[]>, spriteAnimationsRef: RefObject<SpriteAnimations>) => {
-    animationStatesRef.current.forEach((state, idx: number) => {
-        let frames = {
-            location: [] as SpriteCoords[],
-        }
-        for (let frameIdx = 0; frameIdx < state.framesCount; frameIdx++) {
-            let positionX = frameIdx * animationStatesRef.current[idx].width;
-            let positionY = idx * animationStatesRef.current[idx].height;
-            frames.location.push({
-                x: positionX,
-                y: positionY,
-                width: animationStatesRef.current[idx].width,
-                height: animationStatesRef.current[idx].height
-            });
-        }
-        spriteAnimationsRef.current[state.name] = frames;
-    })
 }
