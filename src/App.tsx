@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
 import {BackgroundLayer} from "./BackgroundLayer";
-import {Creature} from "./Creature";
+import {Creature, Factory} from "./Creature";
 
 // Case 1: The image is in 'public' folder.
 const backgroundImageSrc_1 = '/image/png/layer-1.png';
@@ -37,7 +37,9 @@ function App() {
     const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
 
     // Canvas context.
-    const canvasCtxRef = useRef<CanvasRenderingContext2D | null>(null as unknown as CanvasRenderingContext2D);
+    const canvasCtxRef = useRef<CanvasRenderingContext2D>(null as unknown as CanvasRenderingContext2D);
+
+    const creatureFactoryRef = useRef<Factory | null>(null);
 
     // Used for stopping animation.
     const animationIdRef = useRef<number>(0);
@@ -49,9 +51,6 @@ function App() {
     const creaturesRef = useRef<Creature[]>([]);
 
     const animate = (timestamp: number) => {
-
-        const canvas = canvasRef.current;
-        canvasCtxRef.current = canvas.getContext('2d');
 
         // FPS control.
         const deltaTime = timestamp - lastTimestampRef.current;
@@ -75,7 +74,7 @@ function App() {
                 backgroundLayersRef.current.forEach(layer => layer.updatePosition().draw())
 
                 // Draw all the creatures.
-                creaturesRef.current.forEach(creature => creature.move());
+                creaturesRef.current.forEach(creature => creature.updatePosition().draw());
 
             } else {
                 console.log("NO ctx OR spriteCoordinates");
@@ -144,6 +143,8 @@ function App() {
         canvasCtxRef.current.canvas.width = CANVAS_WIDTH;
         canvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
 
+        creatureFactoryRef.current = new Factory(ctx);
+
         // Start animations immediately.
         loadBackgroundImages(canvasCtxRef.current)
             .then(value => {
@@ -180,6 +181,13 @@ function App() {
         setScrollSpeed(newSpeed);
     }
 
+    const addCharacter = (enemyType: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
+        console.log("ADDED ENEMY", enemyType);
+        if (creatureFactoryRef.current) {
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 100, 100, 600, 600, 1, 1, 5));
+        }
+    }
+
     return (
         <div id="App">
             <div id="canvas">
@@ -207,6 +215,13 @@ function App() {
                            onChange={(e) => {
                                changeGameSpeed(Number(e.target.value))
                            }}/>
+                </div>
+                <div id="creatures">
+                    <button onClick={addCharacter("player0")}>Player</button>
+                    <button onClick={addCharacter("enemy1")}>Enemy 1</button>
+                    <button onClick={addCharacter("enemy2")}>Enemy 2</button>
+                    <button onClick={addCharacter("enemy3")}>Enemy 3</button>
+                    <button onClick={addCharacter("enemy4")}>Enemy 4</button>
                 </div>
             </div>
         </div>

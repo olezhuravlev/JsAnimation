@@ -1,4 +1,3 @@
-
 const playerImageSrc = '/image/png/shadow_dog.png';
 const enemy1ImageSrc = '/image/png/enemy1.png';
 const enemy2ImageSrc = '/image/png/enemy2.png';
@@ -14,8 +13,12 @@ export interface StatePhase {
 }
 
 export interface SpriteCoords {
+
+    // Positions of the sprite on the source picture.
     x: number;
     y: number;
+
+    // Positions of the sprite positions on the source picture.
     width: number;
     height: number;
 }
@@ -28,50 +31,74 @@ export interface SpriteAnimations {
     [key: string]: SpriteAnimation;
 }
 
-export interface Props {
+export interface CreatureProps {
     type: string,
     state: string,
-    animationStates: SpriteAnimations,
+    spriteAnimations: SpriteAnimations,
     x: number,
     y: number,
     dest_X: number,
     dest_Y: number,
     speed_X: number,
     speed_Y: number,
+    scale: number,
+}
+
+export interface CreatureImages {
+    [key: string]: HTMLImageElement;
 }
 
 export class Factory {
 
-    images: HTMLImageElement[] = [];
+    ctx: CanvasRenderingContext2D;
+    images: CreatureImages = {};
 
-    constructor(props: Props) {
+    constructor(ctx: CanvasRenderingContext2D) {
+        this.ctx = ctx;
         this.loadImages().then(() => {
             console.log('ALL IMAGES LOADED BY THE FABRIC!');
         })
     }
 
-    create(props: Props): Creature {
+    create(type: string, state: string,
+           x: number, y: number,
+           dest_X: number, dest_Y: number,
+           speed_X: number, speed_Y: number, scale: number): Creature {
 
         let phases: StatePhase[] = [];
-        if (props.type == "dog") {
+        let image: HTMLImageElement;
+        if (type == "player0") {
             phases = this.dogPhases;
-        } else if (props.type == "enemy1") {
+        } else if (type == "enemy1") {
             phases = this.enemy1Phases;
-        } else if (props.type == "enemy2") {
+        } else if (type == "enemy2") {
             phases = this.enemy2Phases;
-        } else if (props.type == "enemy3") {
+        } else if (type == "enemy3") {
             phases = this.enemy3Phases;
-        } else if (props.type == "enemy4") {
+        } else if (type == "enemy4") {
             phases = this.enemy4Phases;
         }
 
-        props.animationStates = fillInSpriteAnimations(phases);
-        return new Creature(props);
+        const props: CreatureProps = {
+            type: type,
+            state: state,
+            spriteAnimations: fillInSpriteAnimations(phases),
+            x: x,
+            y: x,
+            dest_X: dest_X,
+            dest_Y: dest_Y,
+            speed_X: speed_X,
+            speed_Y: speed_Y,
+            scale: scale
+        }
+
+        return new Creature(this.ctx, this.images[type], props);
     }
 
-    loadImage = async (element: HTMLImageElement, path: string) => {
+    loadImage = async (type: string, path: string) => {
+        const element: HTMLImageElement = new Image();
         element.src = path;
-        this.images.push(element);
+        this.images[type] = element;
     }
 
     loadImages = async () => {
@@ -80,11 +107,11 @@ export class Factory {
 
         try {
             await Promise.all([
-                this.loadImage(new Image(), playerImageSrc),
-                this.loadImage(new Image(), enemy1ImageSrc),
-                this.loadImage(new Image(), enemy2ImageSrc),
-                this.loadImage(new Image(), enemy3ImageSrc),
-                this.loadImage(new Image(), enemy4ImageSrc),
+                this.loadImage("player0", playerImageSrc),
+                this.loadImage("enemy1", enemy1ImageSrc),
+                this.loadImage("enemy2", enemy2ImageSrc),
+                this.loadImage("enemy3", enemy3ImageSrc),
+                this.loadImage("enemy4", enemy4ImageSrc),
             ]);
             console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
         } catch (error) {
@@ -217,6 +244,11 @@ export class Factory {
 
 export class Creature {
 
+    ctx: CanvasRenderingContext2D;
+
+    // Source images.
+    sourceImage: HTMLImageElement;
+
     x: number = 0;
     y: number = 0;
     dest_X: number = 0;
@@ -224,12 +256,22 @@ export class Creature {
     speed_X: number = 0;
     speed_Y: number = 0;
     state: string = "";
-    animationStates: SpriteAnimations = {};
+
+    // Size scale source-to-destination;
+    scale: number = 1;
+
+    spriteAnimations: SpriteAnimations = {};
+    currentAnimationPhase: number = 0;
 
     // Index of phase picture to show.
     phase: number = 0;
 
-    constructor(props: Props) {
+
+    constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
+
+        this.ctx = ctx;
+        this.sourceImage = image;
+
         this.x = props.x;
         this.y = props.y;
         this.dest_X = props.dest_X;
@@ -237,7 +279,11 @@ export class Creature {
         this.speed_X = props.speed_X;
         this.speed_Y = props.speed_Y;
         this.state = props.state;
-        this.animationStates = props.animationStates;
+
+        this.scale = props.scale;
+
+        this.spriteAnimations = props.spriteAnimations;
+        this.currentAnimationPhase = 0;
     }
 
     setDestination(x: number, y: number) {
@@ -250,7 +296,9 @@ export class Creature {
         this.speed_Y = y;
     }
 
-    move() {
+    updatePosition() {
+
+        console.log("Creature move", this.x, this.y);
 
         // Remained path to travel.
         let dist_X: number = this.dest_X - this.x;
@@ -276,6 +324,7 @@ export class Creature {
         this.x += delta_X;
         this.y += delta_Y;
 
+        return this;
         // Change current sprite phase.
         // if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
         //     playerSpritePhaseToShowIdxRef.current = 0;
@@ -290,7 +339,7 @@ export class Creature {
         // }
         // const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
         // const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
-        //
+
         // // Enemy1
         // const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
         // if (!currentEnemy1Animation) {
@@ -299,34 +348,19 @@ export class Creature {
         // }
         // const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
         // const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
-        //
-        // // Enemy2
-        // const currentEnemy2Animation = enemy2SpriteAnimationsRef.current[enemy2State];
-        // if (!currentEnemy2Animation) {
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
-        // const enemy2SpritesLocationArr: SpriteCoords[] = currentEnemy2Animation.location;
-        // const enemy2SpriteCoordinates = enemy2SpritesLocationArr[enemy2SpritePhaseToShowIdxRef.current++];
-        //
-        // // Enemy3
-        // const currentEnemy3Animation = enemy3SpriteAnimationsRef.current[enemy3State];
-        // if (!currentEnemy3Animation) {
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
-        // const enemy3SpritesLocationArr: SpriteCoords[] = currentEnemy3Animation.location;
-        // const enemy3SpriteCoordinates = enemy3SpritesLocationArr[enemy3SpritePhaseToShowIdxRef.current++];
-        //
-        // // Enemy4
-        // const currentEnemy4Animation = enemy4SpriteAnimationsRef.current[enemy4State];
-        // if (!currentEnemy4Animation) {
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
-        // const enemy4SpritesLocationArr: SpriteCoords[] = currentEnemy4Animation.location;
-        // const enemy4SpriteCoordinates = enemy4SpritesLocationArr[enemy4SpritePhaseToShowIdxRef.current++];
+    }
 
+    draw() {
+
+        //console.log("DRAW!");
+
+        const spriteAnimation: SpriteAnimation = this.spriteAnimations[this.state];
+        const location: SpriteCoords[] = spriteAnimation.location;
+        const coords: SpriteCoords = location[this.currentAnimationPhase++];
+        if (this.currentAnimationPhase >= location.length) {
+            this.currentAnimationPhase = 0;
+        }
+        this.ctx.drawImage(this.sourceImage, coords.x, coords.y, coords.width, coords.height, this.x, this.y, coords.width / this.scale, coords.height / this.scale);
     }
 }
 

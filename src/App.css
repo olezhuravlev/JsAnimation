@@ -35,8 +35,28 @@ div {
     left: 50%;
 }
 
-#game-speed {
+#creatures {
+    justify-self: end;
+}
 
+#creatures button {
+    margin: 1px;
+    padding: 0px;
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+}
+
+#creatures button:hover {
+    opacity: 0.8;
+}
+
+#creatures button:active {
+    opacity: 0.5;
+}
+
+#game-speed p {
+    margin: 0px;
 }
 
 #slider {
