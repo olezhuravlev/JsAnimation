@@ -39,8 +39,8 @@ export interface CreatureProps {
     y: number,
     dest_X: number,
     dest_Y: number,
-    speed_X: number,
-    speed_Y: number,
+    pace_X: number,
+    pace_Y: number,
     scale: number,
 }
 
@@ -63,19 +63,19 @@ export class Factory {
     create(type: string, state: string,
            x: number, y: number,
            dest_X: number, dest_Y: number,
-           speed_X: number, speed_Y: number, scale: number): Creature {
+           pace_X: number, pace_Y: number, scale: number): Creature {
 
         let phases: StatePhase[] = [];
         let image: HTMLImageElement;
-        if (type == "player0") {
+        if (type === "player0") {
             phases = this.dogPhases;
-        } else if (type == "enemy1") {
+        } else if (type === "enemy1") {
             phases = this.enemy1Phases;
-        } else if (type == "enemy2") {
+        } else if (type === "enemy2") {
             phases = this.enemy2Phases;
-        } else if (type == "enemy3") {
+        } else if (type === "enemy3") {
             phases = this.enemy3Phases;
-        } else if (type == "enemy4") {
+        } else if (type === "enemy4") {
             phases = this.enemy4Phases;
         }
 
@@ -87,8 +87,8 @@ export class Factory {
             y: x,
             dest_X: dest_X,
             dest_Y: dest_Y,
-            speed_X: speed_X,
-            speed_Y: speed_Y,
+            pace_X: pace_X,
+            pace_Y: pace_Y,
             scale: scale
         }
 
@@ -118,29 +118,6 @@ export class Factory {
             console.error("===> SOME IMAGES FAILED TO LOAD:", error);
         }
     }
-
-    // loadImage = (imageRef: HTMLImageElement, imageSrc: string, title: string): Promise<void> => {
-    //
-    //     return new Promise((resolve, reject) => {
-    //
-    //         if (!imageRef) {
-    //             reject(new Error(`IMAGE REF FOR ${title} IN NULL!`));
-    //             return;
-    //         }
-    //
-    //         imageRef.onload = () => {
-    //             console.log(`===> IMAGE ${title} LOADED`);
-    //             resolve();
-    //         }
-    //         imageRef.onerror = () => {
-    //             const msg: string = `===> FAILED TO LOAD IMAGE ${title}!`;
-    //             console.error(msg);
-    //             reject(new Error(msg));
-    //         };
-    //
-    //         imageRef.src = imageSrc;
-    //     })
-    // }
 
     dogPhases: StatePhase[] = [
         {
@@ -253,8 +230,8 @@ export class Creature {
     y: number = 0;
     dest_X: number = 0;
     dest_Y: number = 0;
-    speed_X: number = 0;
-    speed_Y: number = 0;
+    pace_X: number = 0;
+    pace_Y: number = 0;
     state: string = "";
 
     // Size scale source-to-destination;
@@ -266,7 +243,6 @@ export class Creature {
     // Index of phase picture to show.
     phase: number = 0;
 
-
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
 
         this.ctx = ctx;
@@ -276,8 +252,8 @@ export class Creature {
         this.y = props.y;
         this.dest_X = props.dest_X;
         this.dest_Y = props.dest_Y;
-        this.speed_X = props.speed_X;
-        this.speed_Y = props.speed_Y;
+        this.pace_X = props.pace_X;
+        this.pace_Y = props.pace_Y;
         this.state = props.state;
 
         this.scale = props.scale;
@@ -292,62 +268,55 @@ export class Creature {
     }
 
     setSpeed(x: number, y: number) {
-        this.speed_X = x;
-        this.speed_Y = y;
+        this.pace_X = x;
+        this.pace_Y = y;
     }
 
     updatePosition() {
 
-        console.log("Creature move", this.x, this.y);
+        //console.log("Creature current pos", this.x, this.y);
 
-        // Remained path to travel.
-        let dist_X: number = this.dest_X - this.x;
-        let dist_Y: number = this.dest_Y - this.y;
+        // Step to make on the move.
+        let toX = Math.abs(this.dest_X - this.x);
+        let toY = Math.abs(this.dest_Y - this.y);
+        let step_X: number = Math.min(toX, this.pace_X);
+        let step_Y: number = Math.min(toY, this.pace_Y);
 
-        // Angle of the travel.
-        let slope: number = dist_Y / dist_X;
+        //console.log("Creature current step X/Y", step_X, step_Y);
 
-        // Direction of the travel.
+        if (step_X <= 0 && step_Y <= 0) {
+            return this;
+        }
+
         let direction_X: number = 1;
-        if (dist_X < 0) {
+        if (this.dest_X < this.x) {
             direction_X = -1;
         }
-        let delta_X: number = direction_X * this.speed_X;
 
         let direction_Y: number = 1;
-        if (dist_Y < 0) {
+        if (this.dest_Y < this.y) {
             direction_Y = -1;
         }
-        let delta_Y: number = delta_X * slope * direction_Y * this.speed_Y;
 
-        // New coords.
-        this.x += delta_X;
-        this.y += delta_Y;
+        // Angle of the Y-travel relatively to X-axis.
+        let angleYX: number = 1;
+        if (step_X != 0) {
+            angleYX = toY / toX;
+        }
+
+        //console.log("Creature current step X/Y/angleYX", step_X, step_Y, angleYX);
+
+        let vector_X: number = Math.floor(direction_X * step_X);
+        let vector_Y: number = Math.floor(direction_Y * step_Y * angleYX);
+
+        console.log("Creature vectorX/vectorY/angleYX", vector_X, vector_Y, angleYX);
+
+        this.x += vector_X;
+        this.y += vector_Y;
+
+        //console.log("Creature X/Y/angleYX", this.x, this.y, angleYX);
 
         return this;
-        // Change current sprite phase.
-        // if (playerSpritePhaseToShowIdxRef.current >= playerSpritesLocationArr.length) {
-        //     playerSpritePhaseToShowIdxRef.current = 0;
-        // }
-
-
-        // Dog
-        // const currentPlayerAnimation = playerSpriteAnimationsRef.current[playerState];
-        // if (!currentPlayerAnimation) {
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
-        // const playerSpritesLocationArr: SpriteCoords[] = currentPlayerAnimation.location;
-        // const playerSpriteCoordinates = playerSpritesLocationArr[playerSpritePhaseToShowIdxRef.current++];
-
-        // // Enemy1
-        // const currentEnemy1Animation = enemy1SpriteAnimationsRef.current[enemy1State];
-        // if (!currentEnemy1Animation) {
-        //     animationIdRef.current = requestAnimationFrame(animate);
-        //     return;
-        // }
-        // const enemy1SpritesLocationArr: SpriteCoords[] = currentEnemy1Animation.location;
-        // const enemy1SpriteCoordinates = enemy1SpritesLocationArr[enemy1SpritePhaseToShowIdxRef.current++];
     }
 
     draw() {
@@ -356,11 +325,11 @@ export class Creature {
 
         const spriteAnimation: SpriteAnimation = this.spriteAnimations[this.state];
         const location: SpriteCoords[] = spriteAnimation.location;
-        const coords: SpriteCoords = location[this.currentAnimationPhase++];
+        const sourceCoords: SpriteCoords = location[this.currentAnimationPhase++];
         if (this.currentAnimationPhase >= location.length) {
             this.currentAnimationPhase = 0;
         }
-        this.ctx.drawImage(this.sourceImage, coords.x, coords.y, coords.width, coords.height, this.x, this.y, coords.width / this.scale, coords.height / this.scale);
+        this.ctx.drawImage(this.sourceImage, sourceCoords.x, sourceCoords.y, sourceCoords.width, sourceCoords.height, this.x, this.y, sourceCoords.width / this.scale, sourceCoords.height / this.scale);
     }
 }
 

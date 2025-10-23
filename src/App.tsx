@@ -17,7 +17,7 @@ export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 700;
 
 const FROZEN_FRAMES = 2;
-const SCROLL_SPEED_INITIAL = 10;
+const SCROLL_SPEED_INITIAL = 0;
 
 function App() {
 
@@ -66,7 +66,7 @@ function App() {
 
             if (canvasCtxRef.current) {
 
-                console.log("BG LAYERS", backgroundLayersRef.current.length, "CREATURES", creaturesRef.current.length);
+                //console.log("BG LAYERS", backgroundLayersRef.current.length, "CREATURES", creaturesRef.current.length);
 
                 canvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -184,7 +184,7 @@ function App() {
     const addCharacter = (enemyType: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
         console.log("ADDED ENEMY", enemyType);
         if (creatureFactoryRef.current) {
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 100, 100, 600, 600, 1, 1, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 500, 500, 50, 300, 4, 4, 5));
         }
     }
 
