@@ -84,7 +84,7 @@ export class Factory {
             state: state,
             spriteAnimations: fillInSpriteAnimations(phases),
             x: x,
-            y: x,
+            y: y,
             dest_X: dest_X,
             dest_Y: dest_Y,
             pace_X: pace_X,
@@ -274,42 +274,49 @@ export class Creature {
 
     updatePosition() {
 
-        //console.log("Creature current pos", this.x, this.y);
+        console.log("Creature current pos", this.x, this.y);
 
-        // Step to make on the move.
+        // Distance to target point.
         let toX = Math.abs(this.dest_X - this.x);
         let toY = Math.abs(this.dest_Y - this.y);
-        let step_X: number = Math.min(toX, this.pace_X);
-        let step_Y: number = Math.min(toY, this.pace_Y);
-
-        //console.log("Creature current step X/Y", step_X, step_Y);
-
-        if (step_X <= 0 && step_Y <= 0) {
+        if (toX <= 0 && toY <= 0) {
             return this;
         }
 
-        let direction_X: number = 1;
-        if (this.dest_X < this.x) {
-            direction_X = -1;
-        }
-
-        let direction_Y: number = 1;
-        if (this.dest_Y < this.y) {
-            direction_Y = -1;
-        }
+        //console.log("Creature current distance to X, Y", toX, toY);
 
         // Angle of the Y-travel relatively to X-axis.
-        let angleYX: number = 1;
-        if (step_X != 0) {
-            angleYX = toY / toX;
+        let ratioXY: number = 1;
+        let ratioYX: number = 1;
+        if (toX > toY) {
+            ratioYX = toY / toX;
+        } else if (toY > toX) {
+            ratioXY = toX / toY;
         }
 
-        //console.log("Creature current step X/Y/angleYX", step_X, step_Y, angleYX);
+        //console.log("Creature current ratioXY, ratioYX", ratioXY, ratioYX);
 
-        let vector_X: number = Math.floor(direction_X * step_X);
-        let vector_Y: number = Math.floor(direction_Y * step_Y * angleYX);
+        let stepToX: number = Math.min(toX, this.pace_X);
+        let stepToY: number = Math.min(toY, this.pace_Y);
 
-        console.log("Creature vectorX/vectorY/angleYX", vector_X, vector_Y, angleYX);
+        //console.log("Creature current step to X/Y", stepToX, stepToY);
+
+        let directionX: number = 1;
+        if (this.dest_X < this.x) {
+            directionX = -1;
+        }
+
+        let directionY: number = 1;
+        if (this.dest_Y < this.y) {
+            directionY = -1;
+        }
+
+        //console.log("Creature current step to X/Y/ratio", stepToX, stepToY, ratioXY);
+
+        let vector_X: number = directionX * stepToX * ratioXY;
+        let vector_Y: number = directionY * stepToY * ratioYX;
+
+        //console.log("Creature vectorX/vectorY", vector_X, vector_Y);
 
         this.x += vector_X;
         this.y += vector_Y;

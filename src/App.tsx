@@ -184,7 +184,15 @@ function App() {
     const addCharacter = (enemyType: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
         console.log("ADDED ENEMY", enemyType);
         if (creatureFactoryRef.current) {
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 500, 500, 50, 300, 4, 4, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 100, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 100, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 300, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 500, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 500, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 500, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 100, 3, 3, 5));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 300, 3, 3, 5));
+
         }
     }
 
