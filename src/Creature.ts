@@ -42,6 +42,8 @@ export interface CreatureProps {
     pace_X: number,
     pace_Y: number,
     scale: number,
+    distortFuncX: Function,
+    distortFuncY: Function
 }
 
 export interface CreatureImages {
@@ -63,7 +65,8 @@ export class Factory {
     create(type: string, state: string,
            x: number, y: number,
            dest_X: number, dest_Y: number,
-           pace_X: number, pace_Y: number, scale: number): Creature {
+           pace_X: number, pace_Y: number, scale: number,
+           distortFuncX: Function, distortFuncY: Function): Creature {
 
         let phases: StatePhase[] = [];
         let image: HTMLImageElement;
@@ -89,7 +92,9 @@ export class Factory {
             dest_Y: dest_Y,
             pace_X: pace_X,
             pace_Y: pace_Y,
-            scale: scale
+            scale: scale,
+            distortFuncX: distortFuncX,
+            distortFuncY: distortFuncY
         }
 
         return new Creature(this.ctx, this.images[type], props);
@@ -238,10 +243,14 @@ export class Creature {
     scale: number = 1;
 
     spriteAnimations: SpriteAnimations = {};
-    currentAnimationPhase: number = 0;
 
     // Index of phase picture to show.
-    phase: number = 0;
+    currentAnimationPhase: number = 0;
+
+    // Distortion phase.
+    distortPhase: number = 0;
+    distortFuncX: Function;
+    distortFuncY: Function;
 
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
 
@@ -260,26 +269,54 @@ export class Creature {
 
         this.spriteAnimations = props.spriteAnimations;
         this.currentAnimationPhase = 0;
+
+        this.distortFuncX = props.distortFuncX;
+        this.distortFuncY = props.distortFuncY;
     }
 
-    setDestination(x: number, y: number) {
-        this.x = x;
-        this.y = y;
+    setDestination(dest_X: number, dest_Y: number) {
+
+        console.log("NEW DESTINATION", dest_X, dest_Y);
+
+        this.dest_X = dest_X;
+        this.dest_Y = dest_Y;
+
+        return this;
     }
 
-    setSpeed(x: number, y: number) {
-        this.pace_X = x;
-        this.pace_Y = y;
+    setSpeed(pace_X: number, pace_Y: number) {
+        this.pace_X = pace_X;
+        this.pace_Y = pace_Y;
+        return this;
+    }
+
+    calculateDistortion = () : {distortionX: number, distortionY: number} => {
+
+        let distortionX: number = this.distortFuncX(this.distortPhase);
+        let distortionY: number = this.distortFuncY(this.distortPhase);
+
+        //console.log("Creature distortionX/Y", distortionX, distortionY);
+
+        this.distortPhase++;
+        if(this.distortPhase > 999) {
+            this.distortPhase = 0;
+        }
+
+        return {distortionX, distortionY};
     }
 
     updatePosition() {
 
         console.log("Creature current pos", this.x, this.y);
 
+        let {distortionX, distortionY} = this.calculateDistortion();
+
         // Distance to target point.
         let toX = Math.abs(this.dest_X - this.x);
         let toY = Math.abs(this.dest_Y - this.y);
         if (toX <= 0 && toY <= 0) {
+            this.x += distortionX;
+            this.y += distortionY;
             return this;
         }
 
@@ -311,17 +348,11 @@ export class Creature {
             directionY = -1;
         }
 
-        //console.log("Creature current step to X/Y/ratio", stepToX, stepToY, ratioXY);
+        let offset_X: number = directionX * stepToX * ratioXY + distortionX;
+        let offset_Y: number = directionY * stepToY * ratioYX + distortionY;
 
-        let vector_X: number = directionX * stepToX * ratioXY;
-        let vector_Y: number = directionY * stepToY * ratioYX;
-
-        //console.log("Creature vectorX/vectorY", vector_X, vector_Y);
-
-        this.x += vector_X;
-        this.y += vector_Y;
-
-        //console.log("Creature X/Y/angleYX", this.x, this.y, angleYX);
+        this.x += offset_X;
+        this.y += offset_Y;
 
         return this;
     }

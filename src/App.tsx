@@ -184,16 +184,29 @@ function App() {
     const addCharacter = (enemyType: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
         console.log("ADDED ENEMY", enemyType);
         if (creatureFactoryRef.current) {
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 100, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 100, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 300, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 500, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 500, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 500, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 100, 3, 3, 5));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 300, 3, 3, 5));
-
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 100, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 100, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 300, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 600, 500, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 400, 500, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 500, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 100, 3, 3, 5));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 300, 3, 3, 5));
+            const cosFunc: Function = (distortPhase: number) => Math.cos(distortPhase/10) * 20;
+            const sinFunc: Function = (distortPhase: number) => Math.sin(distortPhase/10) * 20;
+            const zeroFunc: Function = () => 0;
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, zeroFunc));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, zeroFunc, sinFunc));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, cosFunc, zeroFunc));
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, zeroFunc, cosFunc));
+            //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, cosFunc));
+            //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, zeroFunc, zeroFunc));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, sinFunc, cosFunc));
         }
+    }
+
+    const setDestination = (dest_X: number, dest_Y:number) => (e: React.MouseEvent<HTMLButtonElement>) => {
+        creaturesRef.current.forEach(creature => creature.setDestination(dest_X, dest_Y).setSpeed(10, 10));
     }
 
     return (
@@ -230,6 +243,9 @@ function App() {
                     <button onClick={addCharacter("enemy2")}>Enemy 2</button>
                     <button onClick={addCharacter("enemy3")}>Enemy 3</button>
                     <button onClick={addCharacter("enemy4")}>Enemy 4</button>
+                </div>
+                <div>
+                    <button onClick={setDestination(1000, 300)}>Set destination</button>
                 </div>
             </div>
         </div>
