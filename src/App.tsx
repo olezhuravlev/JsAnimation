@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import './App.css';
 import {BackgroundLayer} from "./BackgroundLayer";
 import {Creature, Factory} from "./Creature";
@@ -130,6 +130,29 @@ function App() {
         }
     }
 
+    const handleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+        //console.log("===> CLICK!", event);
+        if (creatureFactoryRef.current) {
+
+            //console.log("===> BOOM!", event);
+
+            // Получаем позицию и размеры canvas
+            const rect = canvasRef.current.getBoundingClientRect();
+
+            // Масштаб canvas (для responsive canvas)
+            const scaleX = canvasRef.current.width / rect.width;
+            const scaleY = canvasRef.current.height / rect.height;
+
+            // Преобразуем координаты мыши в координаты canvas
+            const x = (event.clientX - rect.left) * scaleX - 50;
+            const y = (event.clientY - rect.top) * scaleY - 45;
+
+            console.log("===> BOOM!", x, y);
+
+            creaturesRef.current.push(creatureFactoryRef.current.create("boom", "run", x, y, x, y, 1, 1, 2));
+        }
+    }, []);
+
     useEffect(() => {
 
         const canvas = canvasRef.current;
@@ -192,8 +215,8 @@ function App() {
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 500, 3, 3, 5));
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 100, 3, 3, 5));
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 400, 300, 200, 300, 3, 3, 5));
-            const cosFunc: Function = (distortPhase: number) => Math.cos(distortPhase/10) * 20;
-            const sinFunc: Function = (distortPhase: number) => Math.sin(distortPhase/10) * 20;
+            const cosFunc: Function = (distortPhase: number) => Math.cos(distortPhase * Math.PI / 180) * 5;
+            const sinFunc: Function = (distortPhase: number) => Math.sin(distortPhase * Math.PI / 180) * 5;
             const zeroFunc: Function = () => 0;
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, zeroFunc));
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, zeroFunc, sinFunc));
@@ -201,18 +224,18 @@ function App() {
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, zeroFunc, cosFunc));
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, cosFunc));
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, zeroFunc, zeroFunc));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, sinFunc, cosFunc));
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 5, sinFunc, cosFunc));
         }
     }
 
-    const setDestination = (dest_X: number, dest_Y:number) => (e: React.MouseEvent<HTMLButtonElement>) => {
-        creaturesRef.current.forEach(creature => creature.setDestination(dest_X, dest_Y).setSpeed(10, 10));
+    const setDestination = (dest_X: number, dest_Y: number) => (e: React.MouseEvent<HTMLButtonElement>) => {
+        creaturesRef.current.forEach(creature => creature.setDestination(dest_X, dest_Y).setSpeed(20, 20));
     }
 
     return (
         <div id="App">
             <div id="canvas">
-                <canvas id={"canvas-elem"} ref={canvasRef}/>
+                <canvas id={"canvas-elem"} ref={canvasRef} onClick={handleClick}/>
             </div>
             <div id="controls">
                 <div id="choose-animations"></div>
@@ -243,6 +266,7 @@ function App() {
                     <button onClick={addCharacter("enemy2")}>Enemy 2</button>
                     <button onClick={addCharacter("enemy3")}>Enemy 3</button>
                     <button onClick={addCharacter("enemy4")}>Enemy 4</button>
+                    <button onClick={addCharacter("boom")}>Boom</button>
                 </div>
                 <div>
                     <button onClick={setDestination(1000, 300)}>Set destination</button>

@@ -3,6 +3,7 @@ const enemy1ImageSrc = '/image/png/enemy1.png';
 const enemy2ImageSrc = '/image/png/enemy2.png';
 const enemy3ImageSrc = '/image/png/enemy3.png';
 const enemy4ImageSrc = '/image/png/enemy4.png';
+const boomImageSrc = '/image/png/boom.png';
 
 // Image phases for each sprite sequence.
 export interface StatePhase {
@@ -42,8 +43,8 @@ export interface CreatureProps {
     pace_X: number,
     pace_Y: number,
     scale: number,
-    distortFuncX: Function,
-    distortFuncY: Function
+    distortFuncX?: Function,
+    distortFuncY?: Function
 }
 
 export interface CreatureImages {
@@ -66,7 +67,7 @@ export class Factory {
            x: number, y: number,
            dest_X: number, dest_Y: number,
            pace_X: number, pace_Y: number, scale: number,
-           distortFuncX: Function, distortFuncY: Function): Creature {
+           distortFuncX?: Function, distortFuncY?: Function): Creature {
 
         let phases: StatePhase[] = [];
         let image: HTMLImageElement;
@@ -80,6 +81,8 @@ export class Factory {
             phases = this.enemy3Phases;
         } else if (type === "enemy4") {
             phases = this.enemy4Phases;
+        } else if (type === "boom") {
+            phases = this.boomPhases;
         }
 
         const props: CreatureProps = {
@@ -117,6 +120,7 @@ export class Factory {
                 this.loadImage("enemy2", enemy2ImageSrc),
                 this.loadImage("enemy3", enemy3ImageSrc),
                 this.loadImage("enemy4", enemy4ImageSrc),
+                this.loadImage("boom", boomImageSrc),
             ]);
             console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
         } catch (error) {
@@ -222,6 +226,15 @@ export class Factory {
             height: 212
         }
     ];
+
+    boomPhases: StatePhase[] = [
+        {
+            name: 'run',
+            framesCount: 5,
+            width: 200,
+            height: 179
+        }
+    ];
 }
 
 export class Creature {
@@ -249,8 +262,8 @@ export class Creature {
 
     // Distortion phase.
     distortPhase: number = 0;
-    distortFuncX: Function;
-    distortFuncY: Function;
+    distortFuncX?: Function;
+    distortFuncY?: Function;
 
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
 
@@ -292,13 +305,24 @@ export class Creature {
 
     calculateDistortion = () : {distortionX: number, distortionY: number} => {
 
-        let distortionX: number = this.distortFuncX(this.distortPhase);
-        let distortionY: number = this.distortFuncY(this.distortPhase);
+        let distortionX: number;
+        if (this.distortFuncX) {
+            distortionX = this.distortFuncX(this.distortPhase);
+        } else {
+            distortionX = 0;
+        }
+
+        let distortionY: number;
+        if (this.distortFuncY) {
+            distortionY = this.distortFuncY(this.distortPhase);
+        } else {
+            distortionY = 0;
+        }
 
         //console.log("Creature distortionX/Y", distortionX, distortionY);
 
         this.distortPhase++;
-        if(this.distortPhase > 999) {
+        if(this.distortPhase > 359) {
             this.distortPhase = 0;
         }
 
@@ -307,7 +331,7 @@ export class Creature {
 
     updatePosition() {
 
-        console.log("Creature current pos", this.x, this.y);
+        //console.log("Creature current pos", this.x, this.y);
 
         let {distortionX, distortionY} = this.calculateDistortion();
 
