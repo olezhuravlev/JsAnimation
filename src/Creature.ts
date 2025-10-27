@@ -42,9 +42,7 @@ export interface CreatureProps {
     dest_Y: number,
     pace_X: number,
     pace_Y: number,
-    scale: number,
-    distortFuncX?: Function,
-    distortFuncY?: Function
+    scale: number
 }
 
 export interface CreatureImages {
@@ -63,11 +61,11 @@ export class Factory {
         })
     }
 
-    create(type: string, state: string,
-           x: number, y: number,
-           dest_X: number, dest_Y: number,
-           pace_X: number, pace_Y: number, scale: number,
-           distortFuncX?: Function, distortFuncY?: Function): Creature {
+    createFixed(type: string, state: string, x: number, y: number, pace_X: number, pace_Y: number, scale: number): Creature {
+        return this.create(type, state, x, y, x, y, pace_X, pace_Y, scale);
+    };
+
+    create(type: string, state: string, x: number, y: number, dest_X: number, dest_Y: number, pace_X: number, pace_Y: number, scale: number): Creature {
 
         let phases: StatePhase[] = [];
         let image: HTMLImageElement;
@@ -95,9 +93,7 @@ export class Factory {
             dest_Y: dest_Y,
             pace_X: pace_X,
             pace_Y: pace_Y,
-            scale: scale,
-            distortFuncX: distortFuncX,
-            distortFuncY: distortFuncY
+            scale: scale
         }
 
         return new Creature(this.ctx, this.images[type], props);
@@ -252,6 +248,9 @@ export class Creature {
     pace_Y: number = 0;
     state: string = "";
 
+    width: number = 0;
+    height: number = 0;
+
     // Size scale source-to-destination;
     scale: number = 1;
 
@@ -260,10 +259,16 @@ export class Creature {
     // Index of phase picture to show.
     currentAnimationPhase: number = 0;
 
+    animationCycleCounter: number = 0;
+    animationCyclesToShow?: number;
+    destroyCallback?: Function
+
     // Distortion phase.
     distortPhase: number = 0;
     distortFuncX?: Function;
     distortFuncY?: Function;
+
+    destroyed: boolean = false;
 
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
 
@@ -277,14 +282,24 @@ export class Creature {
         this.pace_X = props.pace_X;
         this.pace_Y = props.pace_Y;
         this.state = props.state;
-
         this.scale = props.scale;
-
         this.spriteAnimations = props.spriteAnimations;
         this.currentAnimationPhase = 0;
+    }
 
-        this.distortFuncX = props.distortFuncX;
-        this.distortFuncY = props.distortFuncY;
+    setAnimationPhasesToLive(animationCyclesToShow: number, destroyCallback?: Function) {
+        // If quantity of animations cycles not specified then animation phases shown endlessly in loop.
+        // Otherwise, the specified number of loops shown before the class instance is destroyed.
+        this.animationCyclesToShow = animationCyclesToShow;
+        this.destroyCallback = destroyCallback;
+        return this;
+    }
+
+    destroy() {
+        this.destroyed = true;
+        if (this.destroyCallback) {
+            this.destroyCallback(this);
+        }
     }
 
     setDestination(dest_X: number, dest_Y: number) {
@@ -303,7 +318,13 @@ export class Creature {
         return this;
     }
 
-    calculateDistortion = () : {distortionX: number, distortionY: number} => {
+    setDistortion(distortFuncX?: Function, distortFuncY?: Function) {
+        this.distortFuncX = distortFuncX;
+        this.distortFuncY = distortFuncY;
+        return this;
+    }
+
+    calculateDistortion = (): { distortionX: number, distortionY: number } => {
 
         let distortionX: number;
         if (this.distortFuncX) {
@@ -322,7 +343,7 @@ export class Creature {
         //console.log("Creature distortionX/Y", distortionX, distortionY);
 
         this.distortPhase++;
-        if(this.distortPhase > 359) {
+        if (this.distortPhase > 359) {
             this.distortPhase = 0;
         }
 
@@ -332,6 +353,10 @@ export class Creature {
     updatePosition() {
 
         //console.log("Creature current pos", this.x, this.y);
+
+        if (this.destroyed) {
+            return this;
+        }
 
         let {distortionX, distortionY} = this.calculateDistortion();
 
@@ -385,13 +410,30 @@ export class Creature {
 
         //console.log("DRAW!");
 
+        if (this.destroyed) {
+            return this;
+        }
+
         const spriteAnimation: SpriteAnimation = this.spriteAnimations[this.state];
-        const location: SpriteCoords[] = spriteAnimation.location;
-        const sourceCoords: SpriteCoords = location[this.currentAnimationPhase++];
-        if (this.currentAnimationPhase >= location.length) {
+        const spriteCoordsArray: SpriteCoords[] = spriteAnimation.location;
+        const sourceCoords: SpriteCoords = spriteCoordsArray[this.currentAnimationPhase++];
+        if (this.currentAnimationPhase >= spriteCoordsArray.length) {
+            if (this.animationCyclesToShow && ++this.animationCycleCounter >= this.animationCyclesToShow) {
+                this.destroy();
+            }
             this.currentAnimationPhase = 0;
         }
-        this.ctx.drawImage(this.sourceImage, sourceCoords.x, sourceCoords.y, sourceCoords.width, sourceCoords.height, this.x, this.y, sourceCoords.width / this.scale, sourceCoords.height / this.scale);
+
+        // Dynamically changes to know actual size of the creature.
+        this.width = sourceCoords.width * this.scale;
+        this.height = sourceCoords.height * this.scale;
+
+        const center_X: number = this.x - this.width / 2;
+        const center_Y: number = this.y - this.height / 2;
+
+        this.ctx.drawImage(this.sourceImage, sourceCoords.x, sourceCoords.y, sourceCoords.width, sourceCoords.height, center_X, center_Y, this.width, this.height);
+
+        return this;
     }
 }
 

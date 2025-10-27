@@ -27,6 +27,9 @@ function App() {
     // Game scrolling speed.
     const [scrollSpeed, setScrollSpeed] = useState<number>(SCROLL_SPEED_INITIAL);
 
+    // Alive objects counter.
+    const [objectsQuantity, setObjectsQuantity] = useState<number>(0);
+
     // FPS control time.
     const lastTimestampRef = useRef<number>(0);
 
@@ -74,7 +77,16 @@ function App() {
                 backgroundLayersRef.current.forEach(layer => layer.updatePosition().draw())
 
                 // Draw all the creatures.
-                creaturesRef.current.forEach(creature => creature.updatePosition().draw());
+                for (let i = creaturesRef.current.length - 1; i >= 0; i--) {
+                    const creature = creaturesRef.current[i];
+                    if (creature.destroyed) {
+                        creaturesRef.current.splice(i, 1);
+                        continue;
+                    }
+                    creature.updatePosition().draw();
+                }
+
+                setObjectsQuantity(creaturesRef.current.length)
 
             } else {
                 console.log("NO ctx OR spriteCoordinates");
@@ -144,12 +156,15 @@ function App() {
             const scaleY = canvasRef.current.height / rect.height;
 
             // Преобразуем координаты мыши в координаты canvas
-            const x = (event.clientX - rect.left) * scaleX - 50;
-            const y = (event.clientY - rect.top) * scaleY - 45;
+            const x = (event.clientX - rect.left) * scaleX;
+            const y = (event.clientY - rect.top) * scaleY;
 
             console.log("===> BOOM!", x, y);
 
-            creaturesRef.current.push(creatureFactoryRef.current.create("boom", "run", x, y, x, y, 1, 1, 2));
+            creaturesRef.current.push(creatureFactoryRef.current
+                .createFixed("boom", "run", x, y, 1, 1, 0.5)
+                .setAnimationPhasesToLive(1)
+            );
         }
     }, []);
 
@@ -224,7 +239,16 @@ function App() {
             // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, zeroFunc, cosFunc));
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, cosFunc));
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, zeroFunc, zeroFunc));
-            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 5, sinFunc, cosFunc));
+            const destroyFunc: Function = (creature: Creature) => {
+                console.log("===> *** DESTROYED AT", creature.x, creature.y, creature.width, creature.height);
+                creaturesRef.current.push(creatureFactoryRef.current!
+                    .createFixed("boom", "run", creature.x, creature.y, 1, 1, 0.5)
+                    .setAnimationPhasesToLive(1)
+                );
+            };
+            creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)
+                .setDistortion(sinFunc, cosFunc)
+                .setAnimationPhasesToLive(Math.random() * 200 + 20, destroyFunc));
         }
     }
 
@@ -261,6 +285,7 @@ function App() {
                            }}/>
                 </div>
                 <div id="creatures">
+                    <span id="objects-quantity">{objectsQuantity}</span>
                     <button onClick={addCharacter("player0")}>Player</button>
                     <button onClick={addCharacter("enemy1")}>Enemy 1</button>
                     <button onClick={addCharacter("enemy2")}>Enemy 2</button>
