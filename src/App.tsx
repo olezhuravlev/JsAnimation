@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import './App.css';
 import {BackgroundLayer} from "./BackgroundLayer";
 import {Creature, Factory} from "./Creature";
+import {SoundPreloader} from "./SoundPreloader";
 
 // Case 1: The image is in 'public' folder.
 const backgroundImageSrc_1 = '/image/png/layer-1.png';
@@ -9,6 +10,11 @@ const backgroundImageSrc_2 = '/image/png/layer-2.png';
 const backgroundImageSrc_3 = '/image/png/layer-3.png';
 const backgroundImageSrc_4 = '/image/png/layer-4.png';
 const backgroundImageSrc_5 = '/image/png/layer-5.png';
+
+const creatureDestroySoundSrc_1 = '/media/explosion_dull.flac';
+const creatureDestroySoundSrc_2 = '/media/qubodup-crash.ogg';
+const creatureDestroySoundSrc_3 = '/media/pop.ogg';
+const creatureDestroySoundSrc_4 = '/media/rumble.flac';
 
 // Case 2: The image is in 'src' folder (import needed).
 // import playerImageSrc from './image/png/shadow_dog.png';
@@ -184,15 +190,21 @@ function App() {
         creatureFactoryRef.current = new Factory(ctx);
 
         // Start animations immediately.
-        loadBackgroundImages(canvasCtxRef.current)
-            .then(value => {
-                startAnimation();
-                return () => {
-                    if (animationIdRef.current) {
-                        cancelAnimationFrame(animationIdRef.current);
-                    }
-                };
-            })
+        SoundPreloader.preloadSound(creatureDestroySoundSrc_1)
+            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_2))
+            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_3))
+            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_4))
+            .then(() => {
+                loadBackgroundImages(canvasCtxRef.current)
+                    .then(value => {
+                        startAnimation();
+                        return () => {
+                            if (animationIdRef.current) {
+                                cancelAnimationFrame(animationIdRef.current);
+                            }
+                        };
+                    })
+            });
     }, []); // Empty dependencies array - invoked just once after page mount.
 
     // Restart animations after state changed.
@@ -247,17 +259,25 @@ function App() {
                 );
                 creature.playDestroySound();
             };
+
+            let destroySound;
+            if (enemyType == "enemy1") {
+                destroySound = creatureDestroySoundSrc_1;
+            } else if (enemyType == "enemy2") {
+                destroySound = creatureDestroySoundSrc_2;
+            } else if (enemyType == "enemy3") {
+                destroySound = creatureDestroySoundSrc_3;
+            } else if (enemyType == "enemy4") {
+                destroySound = creatureDestroySoundSrc_4;
+            } else {
+                destroySound = creatureDestroySoundSrc_4;
+            }
+
             creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)
                 .setDistortion(sinFunc, cosFunc)
                 .setAnimationPhasesToLive(Math.random() * 200 + 10, destroyFunc)
-                .setDestroySoundSrc('/media/pop.ogg')
+                .setDestroySoundSrc(destroySound)
             );
-
-            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)
-            //     .setDistortion(sinFunc, cosFunc)
-            //     .setAnimationPhasesToLive(2, destroyFunc)
-            //     .setDestroySoundSrc('/media/pop.ogg')
-            // );
         }
     }
 

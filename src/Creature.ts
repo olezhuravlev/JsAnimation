@@ -1,3 +1,5 @@
+import {SoundPreloader} from "./SoundPreloader";
+
 const playerImageSrc = '/image/png/shadow_dog.png';
 const enemy1ImageSrc = '/image/png/enemy1.png';
 const enemy2ImageSrc = '/image/png/enemy2.png';
@@ -269,7 +271,7 @@ export class Creature {
     distortFuncY?: Function;
 
     destroyed: boolean = false;
-    destroySound: HTMLAudioElement;
+    //destroySound: HTMLAudioElement;
     destroySoundSrc?: string;
 
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
@@ -287,10 +289,6 @@ export class Creature {
         this.scale = props.scale;
         this.spriteAnimations = props.spriteAnimations;
         this.currentAnimationPhase = 0;
-
-        this.destroySound = new Audio();
-        this.destroySound.preload = "auto";
-        this.destroySound.currentTime = 0;
     }
 
     setAnimationPhasesToLive(animationCyclesToShow: number, destroyCallback?: Function) {
@@ -302,8 +300,23 @@ export class Creature {
     }
 
     setDestroySoundSrc(destroySoundSrc: string) {
-        this.destroySoundSrc = destroySoundSrc;
+        //this.destroySoundSrc = destroySoundSrc;
+        this.preloadSound(destroySoundSrc);
         return this;
+    }
+
+    private async preloadSound(destroySoundSrc: string): Promise<void> {
+
+        // if (!this.destroySoundSrc) {
+        //     return;
+        // }
+
+        try {
+            this.destroySoundSrc = destroySoundSrc;
+            await SoundPreloader.preloadSound(destroySoundSrc);
+        } catch (error) {
+            console.warn('Sound preload failed, will load on demand:', error);
+        }
     }
 
     async playDestroySound(): Promise<this> {
@@ -312,32 +325,28 @@ export class Creature {
             return this;
         }
 
-        // Создаем новый Audio элемент каждый раз
-        const sound = new Audio(this.destroySoundSrc);
-        sound.volume = 0.7; // Опционально: установка громкости
-
         try {
-            await sound.play();
-            console.log('DESTROY SOUND PLAYED!');
-
-            // Очистка после воспроизведения
-            sound.addEventListener('ended', () => {
-                sound.src = '';
-                sound.load();
-            });
-
+            let sound = SoundPreloader.getPreloadedSound(this.destroySoundSrc);
+            if (!sound) {
+                // Если предзагрузка не удалась, загружаем на месте
+                sound = await SoundPreloader.preloadSound(this.destroySoundSrc);
+            }
+            // Клонируем для одновременного воспроизведения
+            const soundClone = new Audio(sound.src);
+            soundClone.currentTime = 0;
+            await soundClone.play();
+            console.log('DESTROY SOUND PLAYED instantly!');
         } catch (error) {
-            console.error('Failed to play destroy sound:', error);
+            console.error('Error playing sound:', error);
         }
-
         return this;
     }
 
     destroy() {
         this.destroyed = true;
-        this.destroySound.pause();
-        this.destroySound.src = '';
-        this.destroySound.load();
+        // this.destroySound.pause();
+        // this.destroySound.src = '';
+        // this.destroySound.load();
         if (this.destroyCallback) {
             this.destroyCallback(this);
         }
