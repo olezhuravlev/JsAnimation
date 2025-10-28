@@ -269,6 +269,8 @@ export class Creature {
     distortFuncY?: Function;
 
     destroyed: boolean = false;
+    destroySound: HTMLAudioElement;
+    destroySoundSrc?: string;
 
     constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
 
@@ -285,6 +287,10 @@ export class Creature {
         this.scale = props.scale;
         this.spriteAnimations = props.spriteAnimations;
         this.currentAnimationPhase = 0;
+
+        this.destroySound = new Audio();
+        this.destroySound.preload = "auto";
+        this.destroySound.currentTime = 0;
     }
 
     setAnimationPhasesToLive(animationCyclesToShow: number, destroyCallback?: Function) {
@@ -295,8 +301,43 @@ export class Creature {
         return this;
     }
 
+    setDestroySoundSrc(destroySoundSrc: string) {
+        this.destroySoundSrc = destroySoundSrc;
+        return this;
+    }
+
+    async playDestroySound(): Promise<this> {
+
+        if (!this.destroySoundSrc) {
+            return this;
+        }
+
+        // Создаем новый Audio элемент каждый раз
+        const sound = new Audio(this.destroySoundSrc);
+        sound.volume = 0.7; // Опционально: установка громкости
+
+        try {
+            await sound.play();
+            console.log('DESTROY SOUND PLAYED!');
+
+            // Очистка после воспроизведения
+            sound.addEventListener('ended', () => {
+                sound.src = '';
+                sound.load();
+            });
+
+        } catch (error) {
+            console.error('Failed to play destroy sound:', error);
+        }
+
+        return this;
+    }
+
     destroy() {
         this.destroyed = true;
+        this.destroySound.pause();
+        this.destroySound.src = '';
+        this.destroySound.load();
         if (this.destroyCallback) {
             this.destroyCallback(this);
         }

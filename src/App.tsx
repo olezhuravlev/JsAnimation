@@ -245,10 +245,19 @@ function App() {
                     .createFixed("boom", "run", creature.x, creature.y, 1, 1, 0.5)
                     .setAnimationPhasesToLive(1)
                 );
+                creature.playDestroySound();
             };
             creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)
                 .setDistortion(sinFunc, cosFunc)
-                .setAnimationPhasesToLive(Math.random() * 200 + 20, destroyFunc));
+                .setAnimationPhasesToLive(Math.random() * 200 + 10, destroyFunc)
+                .setDestroySoundSrc('/media/pop.ogg')
+            );
+
+            // creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)
+            //     .setDistortion(sinFunc, cosFunc)
+            //     .setAnimationPhasesToLive(2, destroyFunc)
+            //     .setDestroySoundSrc('/media/pop.ogg')
+            // );
         }
     }
 
