@@ -5,6 +5,7 @@ const enemy1ImageSrc = '/image/png/enemy1.png';
 const enemy2ImageSrc = '/image/png/enemy2.png';
 const enemy3ImageSrc = '/image/png/enemy3.png';
 const enemy4ImageSrc = '/image/png/enemy4.png';
+const enemy5ImageSrc = '/image/png/raven.png';
 const boomImageSrc = '/image/png/boom.png';
 
 // Image phases for each sprite sequence.
@@ -81,6 +82,8 @@ export class Factory {
             phases = this.enemy3Phases;
         } else if (type === "enemy4") {
             phases = this.enemy4Phases;
+        } else if (type === "enemy5") {
+            phases = this.enemy5Phases;
         } else if (type === "boom") {
             phases = this.boomPhases;
         }
@@ -118,6 +121,7 @@ export class Factory {
                 this.loadImage("enemy2", enemy2ImageSrc),
                 this.loadImage("enemy3", enemy3ImageSrc),
                 this.loadImage("enemy4", enemy4ImageSrc),
+                this.loadImage("enemy5", enemy5ImageSrc),
                 this.loadImage("boom", boomImageSrc),
             ]);
             console.log("===> ALL BACKGROUND IMAGES LOADED SUCCESSFULLY");
@@ -222,6 +226,15 @@ export class Factory {
             framesCount: 9,
             width: 213,
             height: 212
+        }
+    ];
+
+    enemy5Phases: StatePhase[] = [
+        {
+            name: 'run',
+            framesCount: 6,
+            width: 271,
+            height: 194
         }
     ];
 

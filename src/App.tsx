@@ -15,6 +15,7 @@ const creatureDestroySoundSrc_1 = '/media/explosion_dull.flac';
 const creatureDestroySoundSrc_2 = '/media/qubodup-crash.ogg';
 const creatureDestroySoundSrc_3 = '/media/pop.ogg';
 const creatureDestroySoundSrc_4 = '/media/rumble.flac';
+const creatureDestroySoundSrc_5 = '/media/crow_caw.wav';
 
 // Case 2: The image is in 'src' folder (import needed).
 // import playerImageSrc from './image/png/shadow_dog.png';
@@ -93,6 +94,7 @@ function App() {
                 }
 
                 setObjectsQuantity(creaturesRef.current.length)
+                canvasCtxRef.current.fillText("Objects: " + creaturesRef.current.length , 5, 40);
 
             } else {
                 console.log("NO ctx OR spriteCoordinates");
@@ -169,7 +171,10 @@ function App() {
 
             creaturesRef.current.push(creatureFactoryRef.current
                 .createFixed("boom", "run", x, y, 1, 1, 0.5)
-                .setAnimationPhasesToLive(1)
+                .setAnimationPhasesToLive(1, (creature: Creature) => {
+                    creature.playDestroySound();
+                })
+                .setDestroySoundSrc(creatureDestroySoundSrc_4)
             );
         }
     }, []);
@@ -186,6 +191,8 @@ function App() {
 
         canvasCtxRef.current.canvas.width = CANVAS_WIDTH;
         canvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
+        canvasCtxRef.current.font = '40px Impact';
+        canvasCtxRef.current.fillStyle = '#576d7e';
 
         creatureFactoryRef.current = new Factory(ctx);
 
@@ -194,6 +201,7 @@ function App() {
             .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_2))
             .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_3))
             .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_4))
+            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_5))
             .then(() => {
                 loadBackgroundImages(canvasCtxRef.current)
                     .then(value => {
@@ -269,6 +277,8 @@ function App() {
                 destroySound = creatureDestroySoundSrc_3;
             } else if (enemyType == "enemy4") {
                 destroySound = creatureDestroySoundSrc_4;
+            } else if (enemyType == "enemy5") {
+                destroySound = creatureDestroySoundSrc_5;
             } else {
                 destroySound = creatureDestroySoundSrc_4;
             }
@@ -320,6 +330,7 @@ function App() {
                     <button onClick={addCharacter("enemy2")}>Enemy 2</button>
                     <button onClick={addCharacter("enemy3")}>Enemy 3</button>
                     <button onClick={addCharacter("enemy4")}>Enemy 4</button>
+                    <button onClick={addCharacter("enemy5")}>Enemy 5</button>
                     <button onClick={addCharacter("boom")}>Boom</button>
                 </div>
                 <div>
