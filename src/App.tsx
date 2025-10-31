@@ -43,11 +43,17 @@ function App() {
     // Counter to drop frozen frames.
     const frameCounterRef = useRef<number>(0);
 
-    // Canvas itself.
-    const canvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
+    // Creatures Canvas.
+    const creaturesCanvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
 
-    // Canvas context.
-    const canvasCtxRef = useRef<CanvasRenderingContext2D>(null as unknown as CanvasRenderingContext2D);
+    // Creatures Canvas context.
+    const creaturesCanvasCtxRef = useRef<CanvasRenderingContext2D>(null as unknown as CanvasRenderingContext2D);
+
+    // Collision canvas.
+    const collisionCanvasRef = useRef<HTMLCanvasElement>(null as unknown as HTMLCanvasElement);
+
+    // Collision Canvas context.
+    const collisionCanvasCtxRef = useRef<CanvasRenderingContext2D>(null as unknown as CanvasRenderingContext2D);
 
     const creatureFactoryRef = useRef<Factory | null>(null);
 
@@ -74,11 +80,11 @@ function App() {
         ++frameCounterRef.current;
         if (frameCounterRef.current % FROZEN_FRAMES === 0) {
 
-            if (canvasCtxRef.current) {
+            if (creaturesCanvasCtxRef.current) {
 
                 //console.log("BG LAYERS", backgroundLayersRef.current.length, "CREATURES", creaturesRef.current.length);
 
-                canvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                creaturesCanvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
                 // Draw the backgrounds.
                 backgroundLayersRef.current.forEach(layer => layer.updatePosition().draw())
@@ -94,7 +100,7 @@ function App() {
                 }
 
                 setObjectsQuantity(creaturesRef.current.length)
-                canvasCtxRef.current.fillText("Objects: " + creaturesRef.current.length , 5, 40);
+                creaturesCanvasCtxRef.current.fillText("Objects: " + creaturesRef.current.length, 5, 40);
 
             } else {
                 console.log("NO ctx OR spriteCoordinates");
@@ -120,7 +126,7 @@ function App() {
 
             const element: HTMLImageElement = new Image();
             element.onload = () => {
-                console.log(`===> IMAGE ${id} LOADED`);
+                //console.log(`===> IMAGE ${id} LOADED`);
                 resolve(new BackgroundLayer(id, element, stepWidth, speedModifier, ctx));
             }
             element.onerror = () => {
@@ -151,23 +157,26 @@ function App() {
     }
 
     const handleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+
         //console.log("===> CLICK!", event);
+
         if (creatureFactoryRef.current) {
 
             //console.log("===> BOOM!", event);
 
             // Получаем позицию и размеры canvas
-            const rect = canvasRef.current.getBoundingClientRect();
+            const rect = creaturesCanvasRef.current.getBoundingClientRect();
 
             // Масштаб canvas (для responsive canvas)
-            const scaleX = canvasRef.current.width / rect.width;
-            const scaleY = canvasRef.current.height / rect.height;
+            const scaleX = creaturesCanvasRef.current.width / rect.width;
+            const scaleY = creaturesCanvasRef.current.height / rect.height;
 
             // Преобразуем координаты мыши в координаты canvas
             const x = (event.clientX - rect.left) * scaleX;
             const y = (event.clientY - rect.top) * scaleY;
 
-            console.log("===> BOOM!", x, y);
+            const detectPixelColor = creaturesCanvasCtxRef.current.getImageData(x, y, 1, 1);
+            console.log("===> BOOM!", x, y, `RGB(${detectPixelColor.data})`);
 
             creaturesRef.current.push(creatureFactoryRef.current
                 .createFixed("boom", "run", x, y, 1, 1, 0.5)
@@ -181,20 +190,35 @@ function App() {
 
     useEffect(() => {
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const creaturesCanvas = creaturesCanvasRef.current;
+        if (!creaturesCanvas) return;
 
-        const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
-        if (!ctx) return;
+        const creaturesCtx: CanvasRenderingContext2D | null = creaturesCanvas.getContext('2d');
+        if (!creaturesCtx) return;
 
-        canvasCtxRef.current = ctx;
+        const collisionCanvas = collisionCanvasRef.current;
+        if (!collisionCanvas) {
+            console.log("No collision canvas!");
+            return;
+        }
 
-        canvasCtxRef.current.canvas.width = CANVAS_WIDTH;
-        canvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
-        canvasCtxRef.current.font = '40px Impact';
-        canvasCtxRef.current.fillStyle = '#576d7e';
+        const collisionCtx: CanvasRenderingContext2D | null = collisionCanvas.getContext('2d');
+        if (!collisionCtx) {
+            console.log("No collision canvas context!");
+            return;
+        }
 
-        creatureFactoryRef.current = new Factory(ctx);
+        creaturesCanvasCtxRef.current = creaturesCtx;
+        creaturesCanvasCtxRef.current.canvas.width = CANVAS_WIDTH;
+        creaturesCanvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
+        creaturesCanvasCtxRef.current.font = '40px Impact';
+        creaturesCanvasCtxRef.current.fillStyle = '#576d7e';
+
+        collisionCanvasCtxRef.current = collisionCtx;
+        collisionCanvasCtxRef.current.canvas.width = CANVAS_WIDTH;
+        collisionCanvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
+
+        creatureFactoryRef.current = new Factory(creaturesCtx);
 
         // Start animations immediately.
         SoundPreloader.preloadSound(creatureDestroySoundSrc_1)
@@ -203,7 +227,7 @@ function App() {
             .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_4))
             .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_5))
             .then(() => {
-                loadBackgroundImages(canvasCtxRef.current)
+                loadBackgroundImages(creaturesCanvasCtxRef.current)
                     .then(value => {
                         startAnimation();
                         return () => {
@@ -222,11 +246,13 @@ function App() {
     // }, [playerState]);
 
     useEffect(() => {
-        console.log("===> Scroll speed changed");
+
+        //console.log("===> Scroll speed changed");
+
         if (backgroundLayersRef?.current.length > 0) {
             backgroundLayersRef.current.forEach(layer => layer.changeGameSpeed(scrollSpeed));
         } else {
-            console.log("===> NO layerRef.current");
+            //console.log("===> NO backgroundLayersRef?.current");
         }
     }, [scrollSpeed]);
 
@@ -260,7 +286,7 @@ function App() {
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 0, 200, 500, 300, 2, 2, 5, sinFunc, cosFunc));
             //creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 300, 200, 2, 2, 5, zeroFunc, zeroFunc));
             const destroyFunc: Function = (creature: Creature) => {
-                console.log("===> *** DESTROYED AT", creature.x, creature.y, creature.width, creature.height);
+                console.log("===> *** DESTROYED AT", Math.floor(creature.x), Math.floor(creature.y), ", SIZE", Math.floor(creature.width), Math.floor(creature.height));
                 creaturesRef.current.push(creatureFactoryRef.current!
                     .createFixed("boom", "run", creature.x, creature.y, 1, 1, 0.5)
                     .setAnimationPhasesToLive(1)
@@ -298,7 +324,8 @@ function App() {
     return (
         <div id="App">
             <div id="canvas">
-                <canvas id={"canvas-elem"} ref={canvasRef} onClick={handleClick}/>
+                <canvas id={"canvas-elem"} ref={creaturesCanvasRef} onClick={handleClick}/>
+                <canvas id={"collision-canvas-elem"} ref={collisionCanvasRef} onClick={handleClick}/>
             </div>
             <div id="controls">
                 <div id="choose-animations"></div>

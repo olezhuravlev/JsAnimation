@@ -14,7 +14,7 @@ export class BackgroundLayer {
 
     constructor(id: string, image: HTMLImageElement, stepWidth: number, speedModifier: number, canvasCtx: CanvasRenderingContext2D,) {
 
-        console.log(`LAYER ${id} CONSTRUCTOR!`);
+        //console.log(`LAYER ${id} CONSTRUCTOR!`);
 
         this.id = id;
         this.x = 0;

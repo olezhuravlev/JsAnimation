@@ -18,13 +18,24 @@ div {
 }
 
 
-#canvas {
+#canvas-elem {
     position: absolute;
     width: 800px;
     height: 700px;
     transform: translate(-50%, -50%);
     top: 40%;
     left: 50%;
+}
+
+#collision-canvas-elem {
+    position: absolute;
+    width: 800px;
+    height: 700px;
+    transform: translate(-50%, -50%);
+    top: 40%;
+    left: 50%;
+    background-color: rgb(255, 0, 0);
+    opacity: 0.1;
 }
 
 #controls {

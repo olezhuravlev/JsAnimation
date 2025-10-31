@@ -60,7 +60,7 @@ export class Factory {
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
         this.loadImages().then(() => {
-            console.log('ALL IMAGES LOADED BY THE FABRIC!');
+            console.log('===> ALL IMAGES LOADED BY THE FABRIC');
         })
     }
 
@@ -112,7 +112,7 @@ export class Factory {
 
     loadImages = async () => {
 
-        console.log("===> *** LOADING IMAGES ***");
+        //console.log("===> *** LOADING IMAGES ***");
 
         try {
             await Promise.all([
@@ -347,8 +347,9 @@ export class Creature {
             // Клонируем для одновременного воспроизведения
             const soundClone = new Audio(sound.src);
             soundClone.currentTime = 0;
+            soundClone.volume = 0.2;
             await soundClone.play();
-            console.log('DESTROY SOUND PLAYED instantly!');
+            //console.log('DESTROY SOUND PLAYED instantly!');
         } catch (error) {
             console.error('Error playing sound:', error);
         }
