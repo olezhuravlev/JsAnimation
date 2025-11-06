@@ -11,11 +11,16 @@ const backgroundImageSrc_3 = '/image/png/layer-3.png';
 const backgroundImageSrc_4 = '/image/png/layer-4.png';
 const backgroundImageSrc_5 = '/image/png/layer-5.png';
 
-const creatureDestroySoundSrc_1 = '/media/explosion_dull.flac';
-const creatureDestroySoundSrc_2 = '/media/qubodup-crash.ogg';
-const creatureDestroySoundSrc_3 = '/media/pop.ogg';
-const creatureDestroySoundSrc_4 = '/media/rumble.flac';
-const creatureDestroySoundSrc_5 = '/media/crow_caw.wav';
+const sniperRifleShootSound = '/media/explosion_dull.flac';
+const assaultRifleShootSound = '/media/qubodup-crash.ogg';
+const popSound = '/media/pop.ogg';
+const shortGunShootSound = '/media/rumble.flac';
+const croakSound = '/media/crow_caw.wav';
+
+const bombExplosionSound = '/media/bomb-explosion.wav';
+const desertCamelSound = '/media/desert-camel.mp3';
+const frogSound_1 = '/media/frog-1.ogg';
+const frogSound_2 = '/media/frog-2.ogg';
 
 // Case 2: The image is in 'src' folder (import needed).
 // import playerImageSrc from './image/png/shadow_dog.png';
@@ -85,6 +90,7 @@ function App() {
                 //console.log("BG LAYERS", backgroundLayersRef.current.length, "CREATURES", creaturesRef.current.length);
 
                 creaturesCanvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                collisionCanvasCtxRef.current.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
                 // Draw the backgrounds.
                 backgroundLayersRef.current.forEach(layer => layer.updatePosition().draw())
@@ -175,16 +181,27 @@ function App() {
             const x = (event.clientX - rect.left) * scaleX;
             const y = (event.clientY - rect.top) * scaleY;
 
-            const detectPixelColor = creaturesCanvasCtxRef.current.getImageData(x, y, 1, 1);
-            console.log("===> BOOM!", x, y, `RGB(${detectPixelColor.data})`);
+            const detectPixelColor = collisionCanvasCtxRef.current.getImageData(x, y, 1, 1);
+            const pixelColor = detectPixelColor.data;
+            console.log("===> BOOM!", x, y, `RGB(${pixelColor})`);
 
             creaturesRef.current.push(creatureFactoryRef.current
                 .createFixed("boom", "run", x, y, 1, 1, 0.5)
                 .setAnimationPhasesToLive(1, (creature: Creature) => {
                     creature.playDestroySound();
                 })
-                .setDestroySoundSrc(creatureDestroySoundSrc_4)
+                .setDestroySoundSrc(sniperRifleShootSound)
             );
+
+            creaturesRef.current.forEach(creature => {
+                if (
+                    creature.color.r === pixelColor[0]
+                    && creature.color.g === pixelColor[1]
+                    && creature.color.b === pixelColor[2]
+                ) {
+                    creature.destroy()
+                }
+            })
         }
     }, []);
 
@@ -218,14 +235,18 @@ function App() {
         collisionCanvasCtxRef.current.canvas.width = CANVAS_WIDTH;
         collisionCanvasCtxRef.current.canvas.height = CANVAS_HEIGHT;
 
-        creatureFactoryRef.current = new Factory(creaturesCtx);
+        creatureFactoryRef.current = new Factory(creaturesCtx, collisionCtx);
 
         // Start animations immediately.
-        SoundPreloader.preloadSound(creatureDestroySoundSrc_1)
-            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_2))
-            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_3))
-            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_4))
-            .then(() => SoundPreloader.preloadSound(creatureDestroySoundSrc_5))
+        SoundPreloader.preloadSound(sniperRifleShootSound)
+            .then(() => SoundPreloader.preloadSound(assaultRifleShootSound))
+            .then(() => SoundPreloader.preloadSound(popSound))
+            .then(() => SoundPreloader.preloadSound(shortGunShootSound))
+            .then(() => SoundPreloader.preloadSound(croakSound))
+            .then(() => SoundPreloader.preloadSound(bombExplosionSound))
+            .then(() => SoundPreloader.preloadSound(desertCamelSound))
+            .then(() => SoundPreloader.preloadSound(frogSound_1))
+            .then(() => SoundPreloader.preloadSound(frogSound_2))
             .then(() => {
                 loadBackgroundImages(creaturesCanvasCtxRef.current)
                     .then(value => {
@@ -296,17 +317,17 @@ function App() {
 
             let destroySound;
             if (enemyType == "enemy1") {
-                destroySound = creatureDestroySoundSrc_1;
+                destroySound = frogSound_1;
             } else if (enemyType == "enemy2") {
-                destroySound = creatureDestroySoundSrc_2;
+                destroySound = frogSound_2;
             } else if (enemyType == "enemy3") {
-                destroySound = creatureDestroySoundSrc_3;
+                destroySound = popSound;
             } else if (enemyType == "enemy4") {
-                destroySound = creatureDestroySoundSrc_4;
+                destroySound = bombExplosionSound;
             } else if (enemyType == "enemy5") {
-                destroySound = creatureDestroySoundSrc_5;
+                destroySound = croakSound;
             } else {
-                destroySound = creatureDestroySoundSrc_4;
+                destroySound = shortGunShootSound;
             }
 
             creaturesRef.current.push(creatureFactoryRef.current.create(enemyType, "run", 300, 200, 400, 200, 4, 4, 0.2)

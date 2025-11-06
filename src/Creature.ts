@@ -55,10 +55,12 @@ export interface CreatureImages {
 export class Factory {
 
     ctx: CanvasRenderingContext2D;
+    collisionCtx: CanvasRenderingContext2D;
     images: CreatureImages = {};
 
-    constructor(ctx: CanvasRenderingContext2D) {
+    constructor(ctx: CanvasRenderingContext2D, collisionCtx: CanvasRenderingContext2D) {
         this.ctx = ctx;
+        this.collisionCtx = collisionCtx;
         this.loadImages().then(() => {
             console.log('===> ALL IMAGES LOADED BY THE FABRIC');
         })
@@ -101,7 +103,7 @@ export class Factory {
             scale: scale
         }
 
-        return new Creature(this.ctx, this.images[type], props);
+        return new Creature(this.ctx, this.collisionCtx, this.images[type], props);
     }
 
     loadImage = async (type: string, path: string) => {
@@ -251,6 +253,7 @@ export class Factory {
 export class Creature {
 
     ctx: CanvasRenderingContext2D;
+    collisionCtx: CanvasRenderingContext2D;
 
     // Source images.
     sourceImage: HTMLImageElement;
@@ -287,9 +290,21 @@ export class Creature {
     //destroySound: HTMLAudioElement;
     destroySoundSrc?: string;
 
-    constructor(ctx: CanvasRenderingContext2D, image: HTMLImageElement, props: CreatureProps) {
+    color: {r: number, g: number, b: number} = {
+        r: Math.floor(Math.random() * 255),
+        g: Math.floor(Math.random() * 255),
+        b: Math.floor(Math.random() * 255)
+    }
+    fillStyle: string = `rgb(${this.color.r},${this.color.g},${this.color.b})`
+
+    constructor(
+        ctx: CanvasRenderingContext2D,
+        collisionCtx: CanvasRenderingContext2D,
+        image: HTMLImageElement,
+        props: CreatureProps) {
 
         this.ctx = ctx;
+        this.collisionCtx = collisionCtx;
         this.sourceImage = image;
 
         this.x = props.x;
@@ -495,6 +510,8 @@ export class Creature {
         const center_X: number = this.x - this.width / 2;
         const center_Y: number = this.y - this.height / 2;
 
+        this.collisionCtx.fillStyle = this.fillStyle;
+        this.collisionCtx.fillRect(center_X, center_Y, this.width, this.height);
         this.ctx.drawImage(this.sourceImage, sourceCoords.x, sourceCoords.y, sourceCoords.width, sourceCoords.height, center_X, center_Y, this.width, this.height);
 
         return this;
